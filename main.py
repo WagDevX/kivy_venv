@@ -17,7 +17,11 @@ from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.tab import MDTabsBase
 from kivymd.uix.floatlayout import MDFloatLayout
 from kivymd.icon_definitions import md_icons
+from kivy.uix.boxlayout import BoxLayout
 
+
+class Content(BoxLayout):
+    pass
 
 class Tab(MDFloatLayout, MDTabsBase):
     pass
@@ -74,11 +78,12 @@ class InventApp(MDApp):
 
     dialog = None
     dialog2 = None
+    dialog3 = None
     login_checked = False
 
     def build(self):
         self.theme_cls.primary_palette = "Blue"
-        self.theme_cls.theme_style = "Dark"
+        self.theme_cls.theme_style = "Light"
         self.screen_manager = ScreenManager()
         self.screen_manager.add_widget(Builder.load_file('./login/login.kv'))
         self.screen_manager.add_widget(Builder.load_file('main.kv'))
@@ -86,7 +91,28 @@ class InventApp(MDApp):
         self.screen_manager.add_widget(self.tela_cadastro)
         return self.screen_manager
      
-        
+    def show_confirmation_dialog(self):
+        if not self.dialog3:
+            self.dialog3 = MDDialog(
+                title="ADICIONAR TAREFA:",
+                type="custom",
+                content_cls=Content(),
+                buttons=[
+                    MDFlatButton(
+                        text="CANCELAR",
+                        theme_text_color="Custom",
+                        text_color=self.theme_cls.primary_color,
+                        on_press=self.fechar_dialogo3
+                    ),
+                    MDFlatButton(
+                        text="ADICIONAR",
+                        theme_text_color="Custom",
+                        text_color=self.theme_cls.primary_color,
+                    ),
+                ],
+            )
+        self.dialog3.open()
+
     def on_start(self):
         if not self.login_checked:
             with open('dados_login.json', 'r') as f:
@@ -138,6 +164,9 @@ class InventApp(MDApp):
 
     def fechar_dialogo2(self, *args):
         self.dialog2.dismiss()
+
+    def fechar_dialogo3(self, *args):
+        self.dialog3.dismiss()
 
     def fechar_dialogo(self, *args):
         self.dialog.dismiss()

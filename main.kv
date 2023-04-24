@@ -26,6 +26,17 @@ MDScreen:
                             halign: 'center'
                             color: 'blue' 
                             font_name: "Kumbh Sans" 
+                        MDBoxLayout:
+                            id: box
+                            spacing: "56dp"
+                            adaptive_size: True
+                            pos_hint: {"center_x": .83, "center_y": .10}
+                            MDFloatingActionButton:
+                                icon: "plus-thick"
+                                theme_icon_color: "Custom"
+                                md_bg_color: "#fefbff"
+                                text_color: "#6851a5"
+                                on_press: app.show_confirmation_dialog()
                     Tab:
                         title: "Iventário"
                         icon: "counter"
@@ -175,3 +186,15 @@ MDScreen:
     color_active: app.theme_cls.primary_dark
     halign: 'center'
     multiline: False
+
+<Content>
+    orientation: "vertical"
+    spacing: "12dp"
+    size_hint_y: None
+    height: "120dp"
+
+    MDTextField:
+        hint_text: "Título"
+
+    MDTextField:
+        hint_text: "Descrição"

@@ -80,7 +80,7 @@ class InventApp(MDApp):
         self.theme_cls.primary_palette = "Blue"
         self.theme_cls.theme_style = "Dark"
         self.screen_manager = ScreenManager()
-        self.screen_manager.add_widget(Builder.load_file('login.kv'))
+        self.screen_manager.add_widget(Builder.load_file('./login/login.kv'))
         self.screen_manager.add_widget(Builder.load_file('main.kv'))
         self.tela_cadastro = (Builder.load_file('./cadastro/cadastro.kv')) 
         self.screen_manager.add_widget(self.tela_cadastro)

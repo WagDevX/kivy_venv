@@ -1,0 +1,177 @@
+
+MDScreen:
+    name: "main"
+
+    MDBottomNavigation:
+        #panel_color: "#eeeaea"
+        selected_color_background: "orange"
+        text_color_active: "lightgrey"
+
+        MDBottomNavigationItem:
+            id: nav
+            name: 'screen 1'
+            text: 'Home'
+            icon: 'home'
+            font_name: "Kumbh Sans"
+            MDBoxLayout:
+                orientation: "vertical"
+                MDTabs:
+                    id: tabs
+                    Tab:
+                        title: "Tarefas"
+                        icon: "facebook-workplace"
+                        MDLabel:
+                            id: welcome
+                            text: "Bem vindo! {}" 
+                            halign: 'center'
+                            color: 'blue' 
+                            font_name: "Kumbh Sans" 
+                    Tab:
+                        title: "Iventário"
+                        icon: "counter"
+                    Tab:
+                        title: "Validade"
+                        icon: "note-minus-outline"
+
+                
+
+        MDBottomNavigationItem:
+            name: 'screen 2'
+            text: 'Produtos'
+            icon: "view-list"
+            badge_icon: "numeric-1"
+            font_name: "Kumbh Sans"
+
+            ScreenListItems
+
+        MDBottomNavigationItem:
+            name: 'screen 3'
+            text: 'Perfil'
+            icon: "account-box"
+            font_name: "Kumbh Sans"
+            MDBoxLayout:
+                orientation: "vertical"
+                MDTabs:
+                    id: tabs
+                    Tab:
+                        title: "Meus dados"
+                        icon: "account-box"
+                        FloatLayout:
+                
+                            MDTextField:
+                                #mode: "rectangle"
+                                text: "teste"
+                                font_name: "Kumbh Sans"
+                                id: name
+                                hint_text: "nome completo"
+                                icon_right: "account"
+                                size_hint_x: None
+                                width: 200
+                                font_size: 15
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.80}
+                                disabled: True
+                            MDTextField:
+                                text: "teste"
+                                font_name: "Kumbh Sans"
+                                id: birth
+                                hint_text: "nascimento dd/mm/yy"
+                                icon_right: "calendar"
+                                size_hint_x: None
+                                width: 200
+                                font_size: 15
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.70}
+                                disabled: True
+                            MDTextField:
+                                text: "teste"
+                                font_name: "Kumbh Sans"
+                                id: pnum
+                                hint_text: "celular"
+                                icon_right: "cellphone"
+                                size_hint_x: None
+                                width: 200
+                                font_size: 15
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.60}
+                                disabled: True
+                            MDTextField:
+                                #mode: "rectangle"
+                                text: "teste"
+                                font_name: "Kumbh Sans"
+                                id: mail
+                                hint_text: "e-mail"
+                                icon_right: "mail"
+                                size_hint_x: None
+                                width: 200
+                                font_size: 15
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.50}
+                                disabled: True                  
+                            MDTextField:
+                                #mode: "rectangle"
+                                font_name: "Kumbh Sans"
+                                id: username
+                                hint_text: "nome de usuário"
+                                icon_right: "account"
+                                size_hint_x: None
+                                width: 200
+                                font_size: 15
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.40}
+                                disabled: True
+                            MDRectangleFlatIconButton:
+                                line_color: 0, 0, 0, 0
+                                font_name: "Kumbh Sans"
+                                text: "DESLOGAR"
+                                icon: "logout"
+                                line_color: 0, 0, 0, 0
+                                pos_hint: {"center_x": .5, "center_y": .20}
+                                on_press: 
+                                    app.show_alert_dialog()
+                    Tab:
+                        title: "Configurações"
+                        icon: "account-settings"
+                        MDLabel:
+                            text: 'EM CONSTRUÇÃO'
+                            halign: "center"
+            
+
+
+<ScreenListItems>:
+    name: "list_items"
+    FloatLayout:
+        
+        CampoPesquisa:
+            font_name: "Kumbh Sans"
+            id: pesquisa 
+            hint_text: 'Digite o que procura'
+            text_validade_unfocus: False
+            pos_hint: {'center_x': 0.5, 'center_y': 0.9}
+            size_hint: .8, .11
+            on_text: root.lista_a_procura(self.text, True)
+
+        RecycleView:
+            id: rv
+            viewclass: 'ListaItemsComImg'
+            key_size: 'height'
+            pos_hint: {'top': 0.8}
+            RecycleBoxLayout:
+                padding: dp(10)
+                default_size: None, dp(70)
+                default_size_hint: 1, None
+                size_hint_y: None
+                height: self.minimum_height
+                orientation: 'vertical'
+
+<ListaItemsComImg>:
+    font_name: "Kumbh Sans"
+    text: "DUAS LINHAS COM AVATAR"
+    secondary_text: "SEGUNDA LINHA AQUI"
+
+    ImageLeftWidget:
+        source: root.source
+
+<CampoPesquisa@MDTextField>:
+    font_name: "Kumbh Sans"
+    mode: "fill"
+    font_size: '20sp'
+    normal_color: app.theme_cls.primary_dark
+    color_active: app.theme_cls.primary_dark
+    halign: 'center'
+    multiline: False

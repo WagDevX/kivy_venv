@@ -42,59 +42,30 @@ MDScreen:
                                     tertiary_text: "Proridade alta"
 
                                     IconRightWidget:
-                                        icon: "note-search-outline"
-                                TwoLineIconListItem:
-                                    text: "Título da tarefa2"
-                                    secondary_text: "Ninguém fazendo"
-
-                                    IconLeftWidget:
-                                        icon: "note-search-outline"
-                                TwoLineIconListItem:
-                                    text: "Título da tarefa2"
-                                    secondary_text: "Ninguém fazendo"
-
-                                    IconLeftWidget:
-                                        icon: "note-search-outline"
-                                TwoLineIconListItem:
-                                    text: "Título da tarefa2"
-                                    secondary_text: "Ninguém fazendo"
-
-                                    IconLeftWidget:
-                                        icon: "note-search-outline"
-                                TwoLineIconListItem:
-                                    text: "Título da tarefa2"
-                                    secondary_text: "Ninguém fazendo"
-
-                                    IconLeftWidget:
-                                        icon: "note-search-outline"
-                                TwoLineIconListItem:
-                                    text: "Título da tarefa2"
-                                    secondary_text: "Ninguém fazendo"
-
-                                    IconLeftWidget:
-                                        icon: "note-search-outline"
-                                TwoLineIconListItem:
-                                    text: "Título da tarefa2"
-                                    secondary_text: "Ninguém fazendo"
-
-                                    IconLeftWidget:
-                                        icon: "note-search-outline"
+                                        icon: "play-circle"
+                                        icon_size: "40sp"
                         
                         MDBoxLayout:
                             id: box
                             spacing: "56dp"
                             adaptive_size: True
                             pos_hint: {"center_x": .83, "center_y": .10}
-                            MDFloatingActionButton:
-                                elevation: 0
-                                icon: "plus-thick"
-                                theme_icon_color: "Custom"
-                                md_bg_color: "#fefbff"
-                                text_color: "#6851a5"
+                            MDIconButton:
+                                icon: "plus-circle"
+                                icon_size: "40sp"
                                 on_press:
                                     root.manager.transition = SwapTransition()
                                     root.manager.current = "tasks"
                                     root.manager.transition = SlideTransition()
+                        MDBoxLayout:
+                            id: box
+                            spacing: "56dp"
+                            adaptive_size: True
+                            pos_hint: {"center_x": .5, "center_y": .10}
+                            MDIconButton:
+                                icon: "refresh-circle"
+                                icon_size: "40sp"
+                                on_press: Snackbar(text="Tarefas atualizadas!").open()
                     Tab:
                         title: "Iventário"
                         icon: "counter"

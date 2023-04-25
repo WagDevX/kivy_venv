@@ -1,0 +1,48 @@
+MDScreen:
+    name: 'tasks'
+    FloatLayout:
+        MDIconButton:
+            icon: "arrow-collapse-left"
+            pos_hint: {"center_y": .95}
+            user_font_size: "30sp"
+            on_press:
+                root.manager.transition.direction = "right"
+                root.manager.current = "main"
+                    
+        MDTextField:
+            font_name: "Kumbh Sans"
+            id: task_title
+            hint_text: "Título da tarefa"
+            size_hint_x: None
+            width: 250
+            font_size: 15
+            pos_hint: {'center_x': 0.5, 'center_y': 0.80}
+        MDTextField:
+            multiline: True
+            font_name: "Kumbh Sans"
+            id: task_description
+            hint_text: "Descrição"
+            height: max(self.minimum_height, (root.height * 0.2))
+            size_hint: (1, None)
+            icon_right: "view-list-outline"
+            size_hint_x: None
+            width: 250
+            font_size: 15
+            pos_hint: {'center_x': 0.5, 'center_y': 0.65}
+        MDTextField:
+            font_name: "Kumbh Sans"
+            id: priority
+            hint_text: "Prioridade"
+            icon_right: "priority-high"
+            size_hint_x: None
+            width: 250
+            font_size: 15
+            pos_hint: {'center_x': 0.5, 'center_y': 0.50}
+        MDRectangleFlatIconButton:
+            line_color: 0, 0, 0, 0
+            font_name: "Kumbh Sans"
+            text: "ADICIONAR"
+            icon: "plus-box-multiple-outline"
+            line_color: 0, 0, 0, 0
+            pos_hint: {"center_x": .5, "center_y": .20}
+            on_press: 

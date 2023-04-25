@@ -1,21 +1,23 @@
-
+#:import SwapTransition kivy.uix.screenmanager.SwapTransition
+#:import SlideTransition kivy.uix.screenmanager.SlideTransition
 MDScreen:
     name: "main"
 
     MDBottomNavigation:
+        font_name: "Kumbh Sans"
+        text_color_active: 0, 0, 0, 1
         #panel_color: "#eeeaea"
         selected_color_background: "orange"
-        text_color_active: "lightgrey"
 
         MDBottomNavigationItem:
             id: nav
             name: 'screen 1'
             text: 'Home'
             icon: 'home'
-            font_name: "Kumbh Sans"
             MDBoxLayout:
                 orientation: "vertical"
                 MDTabs:
+                    font_name: "Kumbh Sans"
                     id: tabs
                     Tab:
                         title: "Tarefas"
@@ -26,17 +28,73 @@ MDScreen:
                             halign: 'center'
                             color: 'blue' 
                             font_name: "Kumbh Sans" 
+                            opacity: 0.0
+                        MDScrollView:
+
+                            MDGridLayout:
+                                padding: dp(10)
+                                id: box
+                                cols: 1
+                                adaptive_height: True
+                                ThreeLineRightIconListItem:
+                                    text: "Título da tarefa"
+                                    secondary_text: "Ninguém fazendoo"
+                                    tertiary_text: "Proridade alta"
+
+                                    IconRightWidget:
+                                        icon: "note-search-outline"
+                                TwoLineIconListItem:
+                                    text: "Título da tarefa2"
+                                    secondary_text: "Ninguém fazendo"
+
+                                    IconLeftWidget:
+                                        icon: "note-search-outline"
+                                TwoLineIconListItem:
+                                    text: "Título da tarefa2"
+                                    secondary_text: "Ninguém fazendo"
+
+                                    IconLeftWidget:
+                                        icon: "note-search-outline"
+                                TwoLineIconListItem:
+                                    text: "Título da tarefa2"
+                                    secondary_text: "Ninguém fazendo"
+
+                                    IconLeftWidget:
+                                        icon: "note-search-outline"
+                                TwoLineIconListItem:
+                                    text: "Título da tarefa2"
+                                    secondary_text: "Ninguém fazendo"
+
+                                    IconLeftWidget:
+                                        icon: "note-search-outline"
+                                TwoLineIconListItem:
+                                    text: "Título da tarefa2"
+                                    secondary_text: "Ninguém fazendo"
+
+                                    IconLeftWidget:
+                                        icon: "note-search-outline"
+                                TwoLineIconListItem:
+                                    text: "Título da tarefa2"
+                                    secondary_text: "Ninguém fazendo"
+
+                                    IconLeftWidget:
+                                        icon: "note-search-outline"
+                        
                         MDBoxLayout:
                             id: box
                             spacing: "56dp"
                             adaptive_size: True
                             pos_hint: {"center_x": .83, "center_y": .10}
                             MDFloatingActionButton:
+                                elevation: 0
                                 icon: "plus-thick"
                                 theme_icon_color: "Custom"
                                 md_bg_color: "#fefbff"
                                 text_color: "#6851a5"
-                                on_press: app.show_confirmation_dialog()
+                                on_press:
+                                    root.manager.transition = SwapTransition()
+                                    root.manager.current = "tasks"
+                                    root.manager.transition = SlideTransition()
                     Tab:
                         title: "Iventário"
                         icon: "counter"
@@ -48,18 +106,16 @@ MDScreen:
 
         MDBottomNavigationItem:
             name: 'screen 2'
-            text: 'Produtos'
-            icon: "view-list"
-            badge_icon: "numeric-1"
-            font_name: "Kumbh Sans"
+            text: 'Busca'
+            icon: 'book-search'
 
             ScreenListItems
+            
 
         MDBottomNavigationItem:
             name: 'screen 3'
             text: 'Perfil'
             icon: "account-box"
-            font_name: "Kumbh Sans"
             MDBoxLayout:
                 orientation: "vertical"
                 MDTabs:

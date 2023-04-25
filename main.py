@@ -69,10 +69,7 @@ class ScreenListItems(Screen):
 
 class ListaItemsComImg(TwoLineAvatarIconListItem):
     source =StringProperty()
-        
-class ScreenNovaTela(Screen):
-    pass
-        
+    
 
 class InventApp(MDApp):
 
@@ -83,11 +80,12 @@ class InventApp(MDApp):
 
     def build(self):
         self.theme_cls.primary_palette = "Blue"
-        self.theme_cls.theme_style = "Light"
+        self.theme_cls.theme_style = "Dark"
         self.screen_manager = ScreenManager()
         self.screen_manager.add_widget(Builder.load_file('./login/login.kv'))
         self.screen_manager.add_widget(Builder.load_file('main.kv'))
         self.tela_cadastro = (Builder.load_file('./cadastro/cadastro.kv')) 
+        self.screen_manager.add_widget(Builder.load_file('./tarefas/tarefas.kv'))
         self.screen_manager.add_widget(self.tela_cadastro)
         return self.screen_manager
      

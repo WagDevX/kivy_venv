@@ -35,6 +35,8 @@ MDScreen:
         MDTextField:
             font_name: "Kumbh Sans"
             id: priority
+            helper_text_mode: "persistent"
+            helper_text:"Alta = 1, Normal = 2 ou Baixa = 3"
             hint_text: "Prioridade"
             icon_right: "priority-high"
             size_hint_x: None
@@ -50,5 +52,5 @@ MDScreen:
             pos_hint: {"center_x": .5, "center_y": .20}
             on_press:
                 envia_tarefas_firebase(task_title.text.strip(), task_description.text.strip(), priority.text.strip())
-                app.adicionar_tarefa(task_title.text, task_description.text)
+                app.adicionar_tarefa(task_title.text, task_description.text, priority.text)
  

@@ -2,6 +2,7 @@ from kivy.lang import Builder
 from modelos import Produtos
 from kivy.core.text import LabelBase
 LabelBase.register(name='Kumbh Sans', fn_regular='./fonts/Kumbh Sans.ttf')
+from kivymd.uix.snackbar import Snackbar
 
 from kivymd.app import MDApp
 from random import sample, choice
@@ -133,6 +134,7 @@ class InventApp(MDApp):
         self.dialog3.open()
 
     def on_start(self):
+        self.pega_tarefas_firebase(True)
         if not self.login_checked:
             with open('dados_login.json', 'r') as f:
                 dados_login = json.load(f)
@@ -212,29 +214,32 @@ class InventApp(MDApp):
         date_dialog = MDDatePicker(title="SELECIONE A DATA",min_year=1950, max_year=2023, font_name="Kumbh Sans",radius=[26, 26, 26, 26], size=(200, 200))
         date_dialog.bind(on_save=self.on_save, on_cancel=self.on_cancel)
         date_dialog.open()  
-    def adicionar_tarefa(self, titulo, descricao, prioridade):
-        prio = "B71C1C"
-        print(prioridade)
+    def adicionar_tarefa(self, titulo, descricao, prioridade, responsavel, login=False):
+        tasks_layout = self.root.get_screen('main').ids.tasks
+        for child in tasks_layout.children:
+            if child.id == titulo:
+                Snackbar(text="Nenhuma tarefa nova!").open()
+                print(f"O widget com ID '{titulo}' já existe na tela.")
+                return
         if '1' in prioridade:
-            prio = "B71C1C"
+            prio = "ff1100"
         elif '2' in prioridade:
-            prio = "1D98FE"
+            prio = "ff6c62"
         elif '3' in prioridade:
-            prio = "BBE0A1"
+            prio = "fdb2ad"
         card = MDCard(
             md_bg_color=prio,
             height=200,
             size_hint=(1, None),
             padding=10,
-            id="box",
+            id=titulo,
         )
         layout = MDRelativeLayout()
 
         titulo_widget = TwoLineListItem(
             pos_hint={"top": 1, "right": 1},
             text=titulo,
-            secondary_text="Ninguém fazendo",
-            id="titulo",
+            secondary_text=f"{responsavel} fazendo.",
         )
         layout.add_widget(titulo_widget)
 
@@ -251,17 +256,17 @@ class InventApp(MDApp):
             icon="clock-check",
             line_color=(0, 0, 0, 0),
             pos_hint={"bottom": 1, "left": 1},
-            id="task",
             on_press=InventApp.dialogo_confirmacao_tarefa,
         )
         layout.add_widget(task_button)
 
         card.add_widget(layout)
-
-        # Adiciona o objeto MDCard ao BoxLayout com o ID "tasks" na tela principal
         tasks_layout = self.root.get_screen('main').ids.tasks
-        tasks_layout.add_widget(card)  
-    def pega_tarefas_firebase(self):
+        tasks_layout.add_widget(card)
+        if login == False:
+            Snackbar(text="Tarefas adicionadas com sucesso!").open() 
+         
+    def pega_tarefas_firebase(self, logado=False):
         firebase = pyrebase.initialize_app(firebaseConfig)
         auth = firebase.auth()
         db = firebase.database()
@@ -269,14 +274,15 @@ class InventApp(MDApp):
         user_ref = db.child('tasks')
         task_data = user_ref.get(au['idToken']).val()
         dados_tarefas = []
-        for task_id, task_data in task_data.items():
+        sorted_tasks = sorted(task_data.items(), key=lambda x: x[1]['Prioridade'])
+        for task_id, task_data in sorted_tasks:
             Descricao = task_data["Descricao"]
             Finalizada = task_data["Finalizada"]
             Prioridade = task_data["Prioridade"]
             Responsável = task_data["Responsável"]
             Status = task_data["Status"]
             Titulo = task_data["Titulo"]
-            self.adicionar_tarefa(Descricao, Titulo, Prioridade)
+            self.adicionar_tarefa(Titulo, Descricao, Prioridade, Responsável, logado)
             tarefa = {'Descricao': Descricao, 
                     'Finalizada': Finalizada, 
                     'Prioridade': Prioridade,
@@ -284,6 +290,6 @@ class InventApp(MDApp):
                     'Status': Status,
                     'Titulo': Titulo}
             dados_tarefas.append(tarefa)
-            with open('dados_tarefas.json', 'w') as f:
-                json.dump(dados_tarefas, f)
+        with open('dados_tarefas.json', 'w') as f:
+            json.dump(dados_tarefas, f)
 InventApp().run()

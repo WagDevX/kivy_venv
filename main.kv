@@ -52,7 +52,9 @@ MDScreen:
                             MDIconButton:
                                 icon: "refresh-circle"
                                 icon_size: "40sp"
-                                on_press: app.pega_tarefas_firebase()
+                                on_press: 
+                                    tasks.clear_widgets() 
+                                    app.pega_tarefas_firebase()
                     Tab:
                         title: "Iventário"
                         icon: "counter"

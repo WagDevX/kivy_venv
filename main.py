@@ -23,6 +23,9 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.list import TwoLineListItem
 from kivymd.uix.relativelayout import MDRelativeLayout
 from kivymd.uix.button import MDRectangleFlatIconButton
+from tarefas import inicia_tarefas_firebase
+from kivymd.font_definitions import theme_font_styles
+from kivymd.uix.transition import *
 
 
 class Content(BoxLayout):
@@ -77,7 +80,7 @@ class ListaItemsComImg(TwoLineAvatarIconListItem):
     
 
 class InventApp(MDApp):
-
+    usuario_logado = None
     dialog = None
     dialog2 = None
     dialog3 = None
@@ -94,22 +97,23 @@ class InventApp(MDApp):
         self.screen_manager.add_widget(self.tela_cadastro)
         return self.screen_manager
     
-    def dialogo_confirmacao_tarefa(self):
-        confirmation_dialog = MDDialog(
-            title="Confirmação",
-            text="Você tem certeza de que deseja iniciar a tarefa?",
-            buttons=[
-                MDFlatButton(
-                    text="Cancelar", 
-                    on_release=lambda *args: confirmation_dialog.dismiss()
-                ),
-                MDFlatButton(
-                    text="Sim", 
-                    on_release=lambda *args: confirmation_dialog.dismiss()
-                ),
-            ],
-        )
-        confirmation_dialog.open()
+    def dialogo_confirmacao_tarefa(self,widget, bot=True):
+        if bot == False:
+            confirmation_dialog = MDDialog(
+                title="Confirmação",
+                text="Você tem certeza de que deseja iniciar a tarefa?",
+                buttons=[
+                    MDFlatButton(
+                        text="Cancelar", 
+                        on_release=lambda *args: confirmation_dialog.dismiss()
+                    ),
+                    MDFlatButton(
+                        text="Sim", 
+                        on_release=lambda *args: inicia_tarefas_firebase(widget.id, self.usuario_logado) and confirmation_dialog.dismiss() 
+                    ),
+                ],
+            )
+            confirmation_dialog.open()
         
     def show_confirmation_dialog(self):
         if not self.dialog3:
@@ -136,14 +140,21 @@ class InventApp(MDApp):
     def on_start(self):
         self.pega_tarefas_firebase(True)
         if not self.login_checked:
-            with open('dados_login.json', 'r') as f:
-                dados_login = json.load(f)
-                if 'email' in dados_login and 'senha' in dados_login:
-                    email = dados_login['email']
-                    senha = dados_login['senha']
-                    if email.strip() and senha.strip():
-                        self.login_checked = True
-                        self.verifica_dados_firebase(email, senha, logado=True)
+            try:
+                with open('dados_login.json', 'r') as f:
+                    dados_login = json.load(f)
+                    if 'email' in dados_login and 'senha' in dados_login:
+                        email = dados_login['email']
+                        senha = dados_login['senha']
+                        user = dados_login['nome_de_usuario']
+                        if email.strip() and senha.strip() and user.strip():
+                            self.login_checked = True
+                            self.usuario_logado = user
+                            self.verifica_dados_firebase(email, senha, logado=True)
+            except Exception:
+                pass
+
+
                      
     def show_alert_dialog(self):
         if not self.dialog:
@@ -214,19 +225,28 @@ class InventApp(MDApp):
         date_dialog = MDDatePicker(title="SELECIONE A DATA",min_year=1950, max_year=2023, font_name="Kumbh Sans",radius=[26, 26, 26, 26], size=(200, 200))
         date_dialog.bind(on_save=self.on_save, on_cancel=self.on_cancel)
         date_dialog.open()  
-    def adicionar_tarefa(self, titulo, descricao, prioridade, responsavel, login=False):
+
+    def adicionar_tarefa(self, titulo, descricao, prioridade, responsavel, status, login=False):
         tasks_layout = self.root.get_screen('main').ids.tasks
         for child in tasks_layout.children:
             if child.id == titulo:
                 Snackbar(text="Nenhuma tarefa nova!").open()
                 print(f"O widget com ID '{titulo}' já existe na tela.")
                 return
+        if status == True:
+            ico = "check-all"
+            botao = "Tarefa iniciada"
+            bot  = True
+        else:
+            ico = "clock-check"
+            botao = "Iniciar tarefa"
+            bot  = False
         if '1' in prioridade:
             prio = "ff1100"
         elif '2' in prioridade:
-            prio = "ff6c62"
+            prio = "5B8900"
         elif '3' in prioridade:
-            prio = "fdb2ad"
+            prio = "007989"
         card = MDCard(
             md_bg_color=prio,
             height=200,
@@ -237,9 +257,11 @@ class InventApp(MDApp):
         layout = MDRelativeLayout()
 
         titulo_widget = TwoLineListItem(
+            id=titulo,
             pos_hint={"top": 1, "right": 1},
+            font_style="H5",
             text=titulo,
-            secondary_text=f"{responsavel} fazendo.",
+            secondary_text=f"{responsavel} está fazendo!",
         )
         layout.add_widget(titulo_widget)
 
@@ -252,11 +274,12 @@ class InventApp(MDApp):
         layout.add_widget(descricao_widget)
 
         task_button = MDRectangleFlatIconButton(
-            text="Iniciar tarefa",
-            icon="clock-check",
+            text=botao,
+            icon=ico,
             line_color=(0, 0, 0, 0),
             pos_hint={"bottom": 1, "left": 1},
-            on_press=InventApp.dialogo_confirmacao_tarefa,
+            id=titulo,
+            on_press=lambda *args: self.dialogo_confirmacao_tarefa(task_button,bot),
         )
         layout.add_widget(task_button)
 
@@ -282,7 +305,7 @@ class InventApp(MDApp):
             Responsável = task_data["Responsável"]
             Status = task_data["Status"]
             Titulo = task_data["Titulo"]
-            self.adicionar_tarefa(Titulo, Descricao, Prioridade, Responsável, logado)
+            self.adicionar_tarefa(Titulo, Descricao, Prioridade, Responsável, Status, logado)
             tarefa = {'Descricao': Descricao, 
                     'Finalizada': Finalizada, 
                     'Prioridade': Prioridade,

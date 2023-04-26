@@ -16,8 +16,12 @@ from login import *
 from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.tab import MDTabsBase
 from kivymd.uix.floatlayout import MDFloatLayout
-from kivymd.icon_definitions import md_icons
 from kivy.uix.boxlayout import BoxLayout
+from kivymd.uix.card import MDCard
+from kivymd.uix.label import MDLabel
+from kivymd.uix.list import TwoLineListItem
+from kivymd.uix.relativelayout import MDRelativeLayout
+from kivymd.uix.button import MDRectangleFlatIconButton
 
 
 class Content(BoxLayout):
@@ -88,7 +92,24 @@ class InventApp(MDApp):
         self.screen_manager.add_widget(Builder.load_file('./tarefas/tarefas.kv'))
         self.screen_manager.add_widget(self.tela_cadastro)
         return self.screen_manager
-     
+    
+    def dialogo_confirmacao_tarefa(self):
+        confirmation_dialog = MDDialog(
+            title="Confirmação",
+            text="Você tem certeza de que deseja iniciar a tarefa?",
+            buttons=[
+                MDFlatButton(
+                    text="Cancelar", 
+                    on_release=lambda *args: confirmation_dialog.dismiss()
+                ),
+                MDFlatButton(
+                    text="Sim", 
+                    on_release=lambda *args: confirmation_dialog.dismiss()
+                ),
+            ],
+        )
+        confirmation_dialog.open()
+        
     def show_confirmation_dialog(self):
         if not self.dialog3:
             self.dialog3 = MDDialog(
@@ -121,9 +142,7 @@ class InventApp(MDApp):
                     if email.strip() and senha.strip():
                         self.login_checked = True
                         self.verifica_dados_firebase(email, senha, logado=True)
-                    
-
-       
+                     
     def show_alert_dialog(self):
         if not self.dialog:
             self.dialog = MDDialog(
@@ -178,7 +197,6 @@ class InventApp(MDApp):
         verifica_dados_firebase(self, user, password, logado_antes=logado)
         atualiza_dados_app(self)
         
-
     def envia_dados_firebase(self, nome, mail, pnum, passw, users, birth):
         if envia_dados_firebase(self, nome, mail, pnum, passw, users, birth):
             return True
@@ -187,13 +205,85 @@ class InventApp(MDApp):
         print(instance, value, date_range)
         self.root.get_screen('cadastro').ids.birth.text = value.strftime('%d/%m/%Y')
         
-
     def on_cancel(self, instance, value):
         '''Events called when the "CANCEL" dialog box button is clicked.'''
 
     def show_date_picker(self):
         date_dialog = MDDatePicker(title="SELECIONE A DATA",min_year=1950, max_year=2023, font_name="Kumbh Sans",radius=[26, 26, 26, 26], size=(200, 200))
         date_dialog.bind(on_save=self.on_save, on_cancel=self.on_cancel)
-        date_dialog.open()    
-    
+        date_dialog.open()  
+    def adicionar_tarefa(self, titulo, descricao, prioridade):
+        prio = "B71C1C"
+        print(prioridade)
+        if '1' in prioridade:
+            prio = "B71C1C"
+        elif '2' in prioridade:
+            prio = "1D98FE"
+        elif '3' in prioridade:
+            prio = "BBE0A1"
+        card = MDCard(
+            md_bg_color=prio,
+            height=200,
+            size_hint=(1, None),
+            padding=10,
+            id="box",
+        )
+        layout = MDRelativeLayout()
+
+        titulo_widget = TwoLineListItem(
+            pos_hint={"top": 1, "right": 1},
+            text=titulo,
+            secondary_text="Ninguém fazendo",
+            id="titulo",
+        )
+        layout.add_widget(titulo_widget)
+
+        descricao_widget = MDLabel(
+            pos_hint={"center_x": 0.5, "center_y": 0.43},
+            text=descricao,
+            font_style="Subtitle1",
+            padding=15,
+        )
+        layout.add_widget(descricao_widget)
+
+        task_button = MDRectangleFlatIconButton(
+            text="Iniciar tarefa",
+            icon="clock-check",
+            line_color=(0, 0, 0, 0),
+            pos_hint={"bottom": 1, "left": 1},
+            id="task",
+            on_press=InventApp.dialogo_confirmacao_tarefa,
+        )
+        layout.add_widget(task_button)
+
+        card.add_widget(layout)
+
+        # Adiciona o objeto MDCard ao BoxLayout com o ID "tasks" na tela principal
+        tasks_layout = self.root.get_screen('main').ids.tasks
+        tasks_layout.add_widget(card)  
+    def pega_tarefas_firebase(self):
+        firebase = pyrebase.initialize_app(firebaseConfig)
+        auth = firebase.auth()
+        db = firebase.database()
+        au = auth.sign_in_with_email_and_password("admin@admin.com", "123456") 
+        user_ref = db.child('tasks')
+        task_data = user_ref.get(au['idToken']).val()
+        dados_tarefas = []
+        for task_id, task_data in task_data.items():
+            Descricao = task_data["Descricao"]
+            Finalizada = task_data["Finalizada"]
+            Prioridade = task_data["Prioridade"]
+            Responsável = task_data["Responsável"]
+            Status = task_data["Status"]
+            Titulo = task_data["Titulo"]
+            self.adicionar_tarefa(Descricao, Titulo, Prioridade)
+            tarefa = {'Descricao': Descricao, 
+                    'Finalizada': Finalizada, 
+                    'Prioridade': Prioridade,
+                    'Responsável': Responsável,
+                    'Status': Status,
+                    'Titulo': Titulo}
+            dados_tarefas.append(tarefa)
+            with open('dados_tarefas.json', 'w') as f:
+                json.dump(dados_tarefas, f)
 InventApp().run()

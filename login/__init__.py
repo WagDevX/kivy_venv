@@ -43,7 +43,6 @@ def atualiza_dados_app(self):
     self.mail = dados_login['email']
     self.nasc = dados_login['nasc']
     self.pnum = dados_login['pnum']
-    self.root.get_screen('main').ids.welcome.text = f"Bem vindo {self.user}!"
     self.root.get_screen('main').ids.username.text = f"{self.user}"
     self.root.get_screen('main').ids.mail.text = f"{self.mail}"
     self.root.get_screen('main').ids.pnum.text = f"{self.pnum}"

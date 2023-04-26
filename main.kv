@@ -22,29 +22,16 @@ MDScreen:
                     Tab:
                         title: "Tarefas"
                         icon: "facebook-workplace"
-                        MDLabel:
-                            id: welcome
-                            text: "Bem vindo! {}" 
-                            halign: 'center'
-                            color: 'blue' 
-                            font_name: "Kumbh Sans" 
-                            opacity: 0.0
                         MDScrollView:
-
-                            MDGridLayout:
+                            MDBoxLayout:
+                                id: tasks
                                 padding: dp(10)
-                                id: box
-                                cols: 1
-                                adaptive_height: True
-                                ThreeLineRightIconListItem:
-                                    text: "Título da tarefa"
-                                    secondary_text: "Ninguém fazendoo"
-                                    tertiary_text: "Proridade alta"
-
-                                    IconRightWidget:
-                                        icon: "play-circle"
-                                        icon_size: "40sp"
-                        
+                                spacing: 10
+                                size_hint_y: None
+                                orientation: "vertical"
+                                height: self.minimum_height
+                                on_minimum_height: self.height = self.minimum_height
+                    
                         MDBoxLayout:
                             id: box
                             spacing: "56dp"
@@ -65,7 +52,7 @@ MDScreen:
                             MDIconButton:
                                 icon: "refresh-circle"
                                 icon_size: "40sp"
-                                on_press: Snackbar(text="Tarefas atualizadas!").open()
+                                on_press: app.pega_tarefas_firebase()
                     Tab:
                         title: "Iventário"
                         icon: "counter"
@@ -97,7 +84,7 @@ MDScreen:
                         FloatLayout:
                 
                             MDTextField:
-                                #mode: "rectangle"
+                                mode: "rectangle"
                                 text: "teste"
                                 font_name: "Kumbh Sans"
                                 id: name
@@ -106,10 +93,9 @@ MDScreen:
                                 size_hint_x: None
                                 width: 200
                                 font_size: 15
-                                pos_hint: {'center_x': 0.5, 'center_y': 0.80}
-                                disabled: True
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.85}
                             MDTextField:
-                                text: "teste"
+                                mode: "rectangle"
                                 font_name: "Kumbh Sans"
                                 id: birth
                                 hint_text: "nascimento dd/mm/yy"
@@ -118,9 +104,8 @@ MDScreen:
                                 width: 200
                                 font_size: 15
                                 pos_hint: {'center_x': 0.5, 'center_y': 0.70}
-                                disabled: True
                             MDTextField:
-                                text: "teste"
+                                mode: "rectangle"
                                 font_name: "Kumbh Sans"
                                 id: pnum
                                 hint_text: "celular"
@@ -128,11 +113,9 @@ MDScreen:
                                 size_hint_x: None
                                 width: 200
                                 font_size: 15
-                                pos_hint: {'center_x': 0.5, 'center_y': 0.60}
-                                disabled: True
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.55}
                             MDTextField:
-                                #mode: "rectangle"
-                                text: "teste"
+                                mode: "rectangle"
                                 font_name: "Kumbh Sans"
                                 id: mail
                                 hint_text: "e-mail"
@@ -140,10 +123,9 @@ MDScreen:
                                 size_hint_x: None
                                 width: 200
                                 font_size: 15
-                                pos_hint: {'center_x': 0.5, 'center_y': 0.50}
-                                disabled: True                  
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.40}                 
                             MDTextField:
-                                #mode: "rectangle"
+                                mode: "rectangle"
                                 font_name: "Kumbh Sans"
                                 id: username
                                 hint_text: "nome de usuário"
@@ -151,15 +133,14 @@ MDScreen:
                                 size_hint_x: None
                                 width: 200
                                 font_size: 15
-                                pos_hint: {'center_x': 0.5, 'center_y': 0.40}
-                                disabled: True
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.25}
                             MDRectangleFlatIconButton:
                                 line_color: 0, 0, 0, 0
                                 font_name: "Kumbh Sans"
                                 text: "DESLOGAR"
                                 icon: "logout"
                                 line_color: 0, 0, 0, 0
-                                pos_hint: {"center_x": .5, "center_y": .20}
+                                pos_hint: {"center_x": .5, "center_y": .15}
                                 on_press: 
                                     app.show_alert_dialog()
                     Tab:

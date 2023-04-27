@@ -39,50 +39,10 @@ class Tab(MDFloatLayout, MDTabsBase):
     pass
 
 class ScreenListItems(Screen):
-    pass
-    
-    '''def on_kv_post(self, base_widget):
-        p = Produtos.select(Produtos.ean, Produtos.descricao) \
-        .order_by(Produtos.descricao)
-
-        for row in p.dicts():
-            
-            sample_images = [
-                'wsol_icon.png'
-            ]
-
-            self.ids.rv.data.append(
-                {
-                    #viewclass": "ItemImage",
-                    #ImageLeftWidget": choice(sample_images),
-                    "source": './images/{}'.format(choice(sample_images)),
-                    "text": str(row['ean']),
-                    "secondary_text": str(row['descricao']),
-                    "callback": lambda x: x,
-                }
-            )'''
-    '''def lista_a_procura(self, text="", search=False):
-        
-        self.ids.rv.data = []
-        p = Produtos.select(Produtos.ean, Produtos.descricao) \
-        .order_by(Produtos.descricao)
-        for row in p.dicts():
-            if search:
-                if (text.upper() in str(row['ean']).upper() or (text.upper() in str(row['descricao']))):
-                    self.ids.rv.data.append(
-                        {
-                            #viewclass": "ItemImage",
-                            #ImageLeftWidget": choice(sample_images),
-                            "source": 'wsol_icon.png',
-                            "text": str(row['ean']),
-                            "secondary_text": str(row['descricao']),
-                            "callback": lambda x: x,
-                        }
-                        )'''     
+    pass 
 
 class ListaItemsComImg(TwoLineAvatarIconListItem):
     pass
-    '''source =StringProperty()'''
     
 
 class InventApp(MDApp):

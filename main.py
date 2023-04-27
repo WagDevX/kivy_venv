@@ -1,19 +1,12 @@
 from kivy.lang import Builder
-from modelos import Produtos
-from kivy.core.text import LabelBase
-LabelBase.register(name='Kumbh Sans', fn_regular='./fonts/Kumbh Sans.ttf')
 from kivymd.uix.snackbar import Snackbar
-
 from kivymd.app import MDApp
-from random import sample, choice
 from kivymd.uix.list import TwoLineAvatarIconListItem
-from kivy.properties import StringProperty
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
-import json
 from cadastro import envia_dados_firebase
-from login import *
+from login import verifica_dados_firebase, atualiza_dados_app
 from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.tab import MDTabsBase
 from kivymd.uix.floatlayout import MDFloatLayout
@@ -25,7 +18,18 @@ from kivymd.uix.relativelayout import MDRelativeLayout
 from kivymd.uix.button import MDRectangleFlatIconButton
 from tarefas import inicia_tarefas_firebase
 from kivymd.font_definitions import theme_font_styles
-from kivymd.uix.transition import *
+import pyrebase
+import json
+firebaseConfig = {
+    "apiKey": "AIzaSyCvJ9mXa6vY6EwPiXOY1o7KjMye22k0OJA",
+    "authDomain": "inventariocob.firebaseapp.com",
+    "projectId": "inventariocob",
+    "storageBucket": "inventariocob.appspot.com",
+    "messagingSenderId": "802697439429",
+    "appId": "1:802697439429:web:846552f1ba89ed60aa68ac",
+    "measurementId": "G-0SRYWQ5YJ3",
+    "databaseURL": "https://inventariocob-default-rtdb.firebaseio.com"
+  }
 
 
 class Content(BoxLayout):
@@ -35,8 +39,9 @@ class Tab(MDFloatLayout, MDTabsBase):
     pass
 
 class ScreenListItems(Screen):
+    pass
     
-    def on_kv_post(self, base_widget):
+    '''def on_kv_post(self, base_widget):
         p = Produtos.select(Produtos.ean, Produtos.descricao) \
         .order_by(Produtos.descricao)
 
@@ -55,8 +60,8 @@ class ScreenListItems(Screen):
                     "secondary_text": str(row['descricao']),
                     "callback": lambda x: x,
                 }
-            )
-    def lista_a_procura(self, text="", search=False):
+            )'''
+    '''def lista_a_procura(self, text="", search=False):
         
         self.ids.rv.data = []
         p = Produtos.select(Produtos.ean, Produtos.descricao) \
@@ -73,10 +78,11 @@ class ScreenListItems(Screen):
                             "secondary_text": str(row['descricao']),
                             "callback": lambda x: x,
                         }
-                        )     
+                        )'''     
 
 class ListaItemsComImg(TwoLineAvatarIconListItem):
-    source =StringProperty()
+    pass
+    '''source =StringProperty()'''
     
 
 class InventApp(MDApp):
@@ -90,10 +96,10 @@ class InventApp(MDApp):
         self.theme_cls.primary_palette = "Blue"
         self.theme_cls.theme_style = "Dark"
         self.screen_manager = ScreenManager()
-        self.screen_manager.add_widget(Builder.load_file('./login/login.kv'))
+        self.screen_manager.add_widget(Builder.load_file('login.kv'))
         self.screen_manager.add_widget(Builder.load_file('main.kv'))
-        self.tela_cadastro = (Builder.load_file('./cadastro/cadastro.kv')) 
-        self.screen_manager.add_widget(Builder.load_file('./tarefas/tarefas.kv'))
+        self.tela_cadastro = (Builder.load_file('cadastro.kv')) 
+        self.screen_manager.add_widget(Builder.load_file('tarefas.kv'))
         self.screen_manager.add_widget(self.tela_cadastro)
         return self.screen_manager
     
@@ -136,7 +142,6 @@ class InventApp(MDApp):
                 ],
             )
         self.dialog3.open()
-
     def on_start(self):
         self.pega_tarefas_firebase(True)
         if not self.login_checked:
@@ -153,9 +158,7 @@ class InventApp(MDApp):
                             self.verifica_dados_firebase(email, senha, logado=True)
             except Exception:
                 pass
-
-
-                     
+                    
     def show_alert_dialog(self):
         if not self.dialog:
             self.dialog = MDDialog(
@@ -219,7 +222,7 @@ class InventApp(MDApp):
         self.root.get_screen('cadastro').ids.birth.text = value.strftime('%d/%m/%Y')
         
     def on_cancel(self, instance, value):
-        '''Events called when the "CANCEL" dialog box button is clicked.'''
+        pass
 
     def show_date_picker(self):
         date_dialog = MDDatePicker(title="SELECIONE A DATA",min_year=1950, max_year=2023, font_name="Kumbh Sans",radius=[26, 26, 26, 26], size=(200, 200))
@@ -290,29 +293,31 @@ class InventApp(MDApp):
             Snackbar(text="Tarefas adicionadas com sucesso!").open() 
          
     def pega_tarefas_firebase(self, logado=False):
-        firebase = pyrebase.initialize_app(firebaseConfig)
-        auth = firebase.auth()
-        db = firebase.database()
-        au = auth.sign_in_with_email_and_password("admin@admin.com", "123456") 
-        user_ref = db.child('tasks')
-        task_data = user_ref.get(au['idToken']).val()
-        dados_tarefas = []
-        sorted_tasks = sorted(task_data.items(), key=lambda x: x[1]['Prioridade'])
-        for task_id, task_data in sorted_tasks:
-            Descricao = task_data["Descricao"]
-            Finalizada = task_data["Finalizada"]
-            Prioridade = task_data["Prioridade"]
-            Responsável = task_data["Responsável"]
-            Status = task_data["Status"]
-            Titulo = task_data["Titulo"]
-            self.adicionar_tarefa(Titulo, Descricao, Prioridade, Responsável, Status, logado)
-            tarefa = {'Descricao': Descricao, 
+            firebase = pyrebase.initialize_app(firebaseConfig)
+            auth = firebase.auth()
+            db = firebase.database()
+            au = auth.sign_in_with_email_and_password("admin@admin.com", "123456") 
+            user_ref = db.child('tasks')
+            task_data = user_ref.get(au['idToken']).val()
+            dados_tarefas = []
+            sorted_tasks = sorted(task_data.items(), key=lambda x: x[1]['Prioridade'])
+            for task_id, task_data in sorted_tasks:
+                Descricao = task_data["Descricao"]
+                Finalizada = task_data["Finalizada"]
+                Prioridade = task_data["Prioridade"]
+                Responsável = task_data["Responsável"]
+                Status = task_data["Status"]
+                Titulo = task_data["Titulo"]
+                self.adicionar_tarefa(Titulo, Descricao, Prioridade, Responsável, Status, logado)
+                tarefa = {'Descricao': Descricao, 
                     'Finalizada': Finalizada, 
                     'Prioridade': Prioridade,
                     'Responsável': Responsável,
                     'Status': Status,
                     'Titulo': Titulo}
-            dados_tarefas.append(tarefa)
-        with open('dados_tarefas.json', 'w') as f:
-            json.dump(dados_tarefas, f)
+                dados_tarefas.append(tarefa)
+                with open('dados_tarefas.json', 'w') as f:
+                    json.dump(dados_tarefas, f)
+            
+
 InventApp().run()

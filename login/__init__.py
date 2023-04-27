@@ -1,9 +1,16 @@
-
 import json
 import pyrebase
-from pyrebaseConfig import firebaseConfig
 
-
+firebaseConfig = {
+    "apiKey": "AIzaSyCvJ9mXa6vY6EwPiXOY1o7KjMye22k0OJA",
+    "authDomain": "inventariocob.firebaseapp.com",
+    "projectId": "inventariocob",
+    "storageBucket": "inventariocob.appspot.com",
+    "messagingSenderId": "802697439429",
+    "appId": "1:802697439429:web:846552f1ba89ed60aa68ac",
+    "measurementId": "G-0SRYWQ5YJ3",
+    "databaseURL": "https://inventariocob-default-rtdb.firebaseio.com"
+  }
 
 def verifica_dados_firebase(self, user, password, logado_antes=False):
         firebase = pyrebase.initialize_app(firebaseConfig)
@@ -12,7 +19,7 @@ def verifica_dados_firebase(self, user, password, logado_antes=False):
         au = auth.sign_in_with_email_and_password("admin@admin.com", "123456") 
         try:
             aut = auth.sign_in_with_email_and_password(user, password)
-        except Exception as e:
+        except Exception:
             self.show_alert_login()
         else:
             if logado_antes == False:
@@ -33,7 +40,6 @@ def verifica_dados_firebase(self, user, password, logado_antes=False):
                 self.root.current = "main"
             else:
                 self.root.current = "main"
-           
             return True
 def atualiza_dados_app(self):
     with open('dados_login.json', 'r') as f:

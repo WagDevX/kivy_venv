@@ -24,7 +24,7 @@ def verifica_dados_firebase(self, user, password, logado_antes=False):
         else:
             if logado_antes == False:
                 nome_de_usuario = aut['displayName']
-                user_ref = db.child('users').child('Wagner')
+                user_ref = db.child('users').child(aut['displayName'])
                 user_data = user_ref.get(au['idToken']).val()
                 name = user_data['name']
                 birth = user_data['birth']
@@ -54,3 +54,7 @@ def atualiza_dados_app(self):
     self.root.get_screen('main').ids.pnum.text = f"{self.pnum}"
     self.root.get_screen('main').ids.birth.text = f"{self.nasc}"
     self.root.get_screen('main').ids.name.text = f"{self.nam}"
+
+def limpar_dados_login():
+    with open('dados_login.json', 'w') as f:
+        json.dump({}, f)

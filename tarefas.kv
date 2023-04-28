@@ -14,14 +14,12 @@ MDScreen:
             text: "Ninguém"
             opacity: 0.0
                      
-        MDTextField:
+        CampoDados:
             id: task_title
             hint_text: "Título da tarefa"
             helper_text: "Para editar basta digitar o mesmo título"
             helper_text_mode: "persistent"
-            size_hint_x: None
-            width: 250
-            font_size: 15
+            font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.80}
         MDTextField:
             multiline: True
@@ -30,21 +28,19 @@ MDScreen:
             height: max(self.minimum_height, (root.height * 0.2))
             size_hint: (1, None)
             icon_right: "view-list-outline"
-            size_hint_x: None
-            width: 250
-            font_size: 15
+            size_hint_x: "0.8"
+            font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.65}
-        MDTextField:
+        CampoDados:
             id: priority
             helper_text_mode: "persistent"
             helper_text:"Alta = 1, Normal = 2 ou Baixa = 3"
             hint_text: "Prioridade"
             icon_right: "priority-high"
-            size_hint_x: None
-            width: 250
-            font_size: 15
+            font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.50}
         MDRectangleFlatIconButton:
+            font_size: "25sp"
             line_color: 0, 0, 0, 0
             text: "ADICIONAR"
             icon: "plus-box-multiple-outline"
@@ -53,4 +49,3 @@ MDScreen:
             on_press:
                 envia_tarefas_firebase(task_title.text.strip(), task_description.text.strip(), priority.text.strip())
                 app.adicionar_tarefa(task_title.text, task_description.text, priority.text, resp.text,False, False)
- 

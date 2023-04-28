@@ -6,7 +6,7 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 from cadastro import envia_dados_firebase
-from login import verifica_dados_firebase, atualiza_dados_app
+from login import verifica_dados_firebase, atualiza_dados_app, limpar_dados_login
 from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.tab import MDTabsBase
 from kivymd.uix.floatlayout import MDFloatLayout
@@ -20,6 +20,10 @@ from tarefas import inicia_tarefas_firebase
 from kivymd.font_definitions import theme_font_styles
 import pyrebase
 import json
+from kivy.properties import StringProperty
+from kivy.core.text import LabelBase
+
+
 firebaseConfig = {
     "apiKey": "AIzaSyCvJ9mXa6vY6EwPiXOY1o7KjMye22k0OJA",
     "authDomain": "inventariocob.firebaseapp.com",
@@ -31,6 +35,8 @@ firebaseConfig = {
     "databaseURL": "https://inventariocob-default-rtdb.firebaseio.com"
   }
 
+class MD3Card(MDCard):
+    text = StringProperty()
 
 class Content(BoxLayout):
     pass
@@ -39,12 +45,51 @@ class Tab(MDFloatLayout, MDTabsBase):
     pass
 
 class ScreenListItems(Screen):
-    pass 
+    pass
+    
+    '''def on_kv_post(self, base_widget):
+        p = Produtos.select(Produtos.ean, Produtos.descricao) \
+        .order_by(Produtos.descricao)
+
+        for row in p.dicts():
+            
+            sample_images = [
+                'wsol_icon.png'
+            ]
+
+            self.ids.rv.data.append(
+                {
+                    #viewclass": "ItemImage",
+                    #ImageLeftWidget": choice(sample_images),
+                    "source": './images/{}'.format(choice(sample_images)),
+                    "text": str(row['ean']),
+                    "secondary_text": str(row['descricao']),
+                    "callback": lambda x: x,
+                }
+            )'''
+    '''def lista_a_procura(self, text="", search=False):
+        
+        self.ids.rv.data = []
+        p = Produtos.select(Produtos.ean, Produtos.descricao) \
+        .order_by(Produtos.descricao)
+        for row in p.dicts():
+            if search:
+                if (text.upper() in str(row['ean']).upper() or (text.upper() in str(row['descricao']))):
+                    self.ids.rv.data.append(
+                        {
+                            #viewclass": "ItemImage",
+                            #ImageLeftWidget": choice(sample_images),
+                            "source": 'wsol_icon.png',
+                            "text": str(row['ean']),
+                            "secondary_text": str(row['descricao']),
+                            "callback": lambda x: x,
+                        }
+                        )'''     
 
 class ListaItemsComImg(TwoLineAvatarIconListItem):
     pass
+    '''source =StringProperty()'''
     
-
 class InventApp(MDApp):
     usuario_logado = None
     dialog = None
@@ -54,7 +99,7 @@ class InventApp(MDApp):
 
     def build(self):
         self.theme_cls.primary_palette = "Blue"
-        self.theme_cls.theme_style = "Dark"
+        self.theme_cls.theme_style = "Light"
         self.screen_manager = ScreenManager()
         self.screen_manager.add_widget(Builder.load_file('login.kv'))
         self.screen_manager.add_widget(Builder.load_file('main.kv'))
@@ -75,7 +120,8 @@ class InventApp(MDApp):
                     ),
                     MDFlatButton(
                         text="Sim", 
-                        on_release=lambda *args: inicia_tarefas_firebase(widget.id, self.usuario_logado) and confirmation_dialog.dismiss() 
+                        on_press=lambda *args: inicia_tarefas_firebase(widget.id, self.usuario_logado), 
+                        on_release=lambda *args: confirmation_dialog.dismiss()
                     ),
                 ],
             )
@@ -102,6 +148,7 @@ class InventApp(MDApp):
                 ],
             )
         self.dialog3.open()
+
     def on_start(self):
         self.pega_tarefas_firebase(True)
         if not self.login_checked:
@@ -165,6 +212,7 @@ class InventApp(MDApp):
         self.dialog.dismiss()
 
     def ir_para_login(self, *args):
+        limpar_dados_login()
         self.dialog.dismiss()
         self.root.current = "login"
         self.root.transition.direction = "right"
@@ -185,17 +233,11 @@ class InventApp(MDApp):
         pass
 
     def show_date_picker(self):
-        date_dialog = MDDatePicker(title="SELECIONE A DATA",min_year=1950, max_year=2023, font_name="Kumbh Sans",radius=[26, 26, 26, 26], size=(200, 200))
+        date_dialog = MDDatePicker(title="SELECIONE A DATA",min_year=1950, max_year=2023,radius=[26, 26, 26, 26], size=(200, 200))
         date_dialog.bind(on_save=self.on_save, on_cancel=self.on_cancel)
         date_dialog.open()  
 
     def adicionar_tarefa(self, titulo, descricao, prioridade, responsavel, status, login=False):
-        tasks_layout = self.root.get_screen('main').ids.tasks
-        for child in tasks_layout.children:
-            if child.id == titulo:
-                Snackbar(text="Nenhuma tarefa nova!").open()
-                print(f"O widget com ID '{titulo}' já existe na tela.")
-                return
         if status == True:
             ico = "check-all"
             botao = "Tarefa iniciada"
@@ -210,12 +252,8 @@ class InventApp(MDApp):
             prio = "5B8900"
         elif '3' in prioridade:
             prio = "007989"
-        card = MDCard(
+        card = MD3Card(
             md_bg_color=prio,
-            height=200,
-            size_hint=(1, None),
-            padding=10,
-            id=titulo,
         )
         layout = MDRelativeLayout()
 
@@ -232,7 +270,6 @@ class InventApp(MDApp):
             pos_hint={"center_x": 0.5, "center_y": 0.43},
             text=descricao,
             font_style="Subtitle1",
-            padding=15,
         )
         layout.add_widget(descricao_widget)
 
@@ -277,7 +314,8 @@ class InventApp(MDApp):
                     'Titulo': Titulo}
                 dados_tarefas.append(tarefa)
                 with open('dados_tarefas.json', 'w') as f:
-                    json.dump(dados_tarefas, f)
+                    json.dump(dados_tarefas, f)    
             
-
+    LabelBase.register(name='Kumbh',
+                    fn_regular='KumbhSans.ttf')
 InventApp().run()

@@ -10,71 +10,58 @@ Screen:
                 root.manager.transition.direction = "right"
                 root.manager.current = "login"
          
-        MDTextField:
+        CampoDados:
             id: name
             hint_text: "nome completo"
             icon_right: "account"
-            size_hint_x: None
-            width: 200
-            font_size: 18
+            font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.83}
-        MDTextField:
+        CampoDados:
             on_touch_down: if self.collide_point(*args[1].pos): app.show_date_picker()
             id: birth
             hint_text: "nascimento dd/mm/yy"
             icon_right: "calendar"
-            size_hint_x: None
-            width: 200
-            font_size: 18
+            font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.73}
-        MDTextField:
+        CampoDados:
             id: pnum
             hint_text: "celular"
             icon_right: "cellphone"
-            size_hint_x: None
-            width: 200
-            font_size: 18
+            size_hint_x: "0.8"
+            font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.63}
-        MDTextField:
+        CampoDados:
             id: mail
             validator: "email"
             hint_text: "e-mail"
             icon_right: "mail"
-            size_hint_x: None
-            width: 200
-            font_size: 18
+            font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.53}                  
-        MDTextField:
+        CampoDados:
             id: user
             hint_text: "nome de usuário"
             icon_right: "account"
-            size_hint_x: None
-            width: 200
-            font_size: 18
+            font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.43}
 
-        MDTextField:
+        CampoDados:
             id: password
             hint_text: "senha"
             icon_right: "eye-off"
-            size_hint_x: None
-            width: 200
-            font_size: 18
+            font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.33}
             
 
-        MDTextField:
+        CampoDados:
             id: password_confirm
             hint_text: "coonfirme sua senha"
             icon_right: "eye-off"
-            size_hint_x: None
-            width: 200
-            font_size: 18
+            font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.23}
 
         MDFillRoundFlatButton:
             text: "CADASTRAR"
-            font_size: 12
+            font_size: "25sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.13}
             on_press: 
                 if app.envia_dados_firebase(name.text, mail.text, pnum.text, password.text, user.text, birth.text): Snackbar(text="Cadastrado com Sucesso!").open()

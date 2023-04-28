@@ -41,7 +41,7 @@ MDScreen:
                                 on_press:
                                     root.manager.transition = SwapTransition()
                                     root.manager.current = "tasks"
-                                    root.manager.transition = SlideTransition()
+                                    app.screen_manager.transition = SlideTransition()
                         MDBoxLayout:
                             id: box
                             spacing: "56dp"
@@ -83,58 +83,49 @@ MDScreen:
                         icon: "account-box"
                         FloatLayout:
                 
-                            MDTextField:
+                            CampoDados:
+                                font_size: "18sp"
                                 mode: "rectangle"
                                 text: "teste"
                                 id: name
                                 hint_text: "nome completo"
                                 icon_right: "account"
-                                size_hint_x: None
-                                width: 200
-                                font_size: 15
                                 pos_hint: {'center_x': 0.5, 'center_y': 0.85}
-                            MDTextField:
+                            CampoDados:
+                                font_size: "18sp"
                                 mode: "rectangle"
                                 id: birth
                                 hint_text: "nascimento dd/mm/yy"
                                 icon_right: "calendar"
-                                size_hint_x: None
-                                width: 200
-                                font_size: 15
                                 pos_hint: {'center_x': 0.5, 'center_y': 0.70}
-                            MDTextField:
+                            CampoDados:
+                                font_size: "18sp"
                                 mode: "rectangle"
                                 id: pnum
                                 hint_text: "celular"
                                 icon_right: "cellphone"
-                                size_hint_x: None
-                                width: 200
-                                font_size: 15
                                 pos_hint: {'center_x': 0.5, 'center_y': 0.55}
-                            MDTextField:
+                            CampoDados:
+                                font_size: "18sp"
                                 mode: "rectangle"
                                 id: mail
                                 hint_text: "e-mail"
                                 icon_right: "mail"
-                                size_hint_x: None
-                                width: 200
-                                font_size: 15
                                 pos_hint: {'center_x': 0.5, 'center_y': 0.40}                 
-                            MDTextField:
+                            CampoDados:
+                                font_size: "18sp"
                                 mode: "rectangle"
                                 id: username
                                 hint_text: "nome de usuário"
                                 icon_right: "account"
-                                size_hint_x: None
-                                width: 200
-                                font_size: 15
                                 pos_hint: {'center_x': 0.5, 'center_y': 0.25}
                             MDRectangleFlatIconButton:
+                                font_size: "30sp"
                                 line_color: 0, 0, 0, 0
                                 text: "DESLOGAR"
                                 icon: "logout"
                                 line_color: 0, 0, 0, 0
-                                pos_hint: {"center_x": .5, "center_y": .15}
+                                pos_hint: {"center_x": .5, "center_y": .12}
                                 on_press: 
                                     app.show_alert_dialog()
                     Tab:
@@ -179,7 +170,6 @@ MDScreen:
         #source: root.source
 
 <CampoPesquisa@MDTextField>:
-    font_name: "Kumbh Sans"
     mode: "fill"
     font_size: '20sp'
     normal_color: app.theme_cls.primary_dark
@@ -198,3 +188,13 @@ MDScreen:
 
     MDTextField:
         hint_text: "Descrição"
+
+<CampoDados@MDTextField>:
+    size_hint_x: "0.8"
+    font_size: "18sp"
+
+<MD3Card>
+    height: "200dp"
+    padding: "10dp", "10dp"
+    size_hint: "1dp", None
+

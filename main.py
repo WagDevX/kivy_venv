@@ -23,7 +23,8 @@ import json
 from kivy.properties import StringProperty
 from kivy.core.text import LabelBase
 
-
+class userconfigscreen(Screen):
+    pass
 
 firebaseConfig = {
     "apiKey": "AIzaSyCvJ9mXa6vY6EwPiXOY1o7KjMye22k0OJA",
@@ -99,6 +100,7 @@ class InventApp(MDApp):
     login_checked = False
 
     def build(self):
+        self.theme_cls.material_style = "M3"
         self.theme_cls.primary_palette = "Blue"
         self.theme_cls.theme_style = "Dark"
         self.screen_manager = ScreenManager()
@@ -287,7 +289,7 @@ class InventApp(MDApp):
         layout.add_widget(titulo_widget)
 
         descricao_widget = MDLabel(
-            pos_hint={"center_x": 0.5, "center_y": 0.43},
+            pos_hint={"center_x": 0.56, "center_y": 0.43},
             text=descricao,
             font_style="Subtitle1",
         )

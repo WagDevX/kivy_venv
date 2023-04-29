@@ -131,9 +131,11 @@ MDScreen:
                     Tab:
                         title: "Configurações"
                         icon: "account-settings"
-                        MDLabel:
-                            text: 'EM CONSTRUÇÃO'
-                            halign: "center"
+                        MDFloatLayout:
+                            MDSwitch:
+                                pos_hint: {'center_x': .5, 'center_y': .5}
+                                icon_active: "check"
+                                icon_active_color: "white"
             
 
 

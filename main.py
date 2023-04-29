@@ -289,7 +289,7 @@ class InventApp(MDApp):
         layout.add_widget(titulo_widget)
 
         descricao_widget = MDLabel(
-            pos_hint={"center_x": 0.56, "center_y": 0.43},
+            pos_hint={"center_x": 0.51, "center_y": 0.43},
             text=descricao,
             font_style="Subtitle1",
         )

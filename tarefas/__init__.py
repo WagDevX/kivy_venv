@@ -1,6 +1,7 @@
 import pyrebase
-from kivymd.uix.snackbar import Snackbar
 import datetime
+from kivymd.uix.snackbar import MDSnackbar,MDSnackbarCloseButton
+from kivymd.uix.label import MDLabel
 
 firebaseConfig = {
     "apiKey": "AIzaSyCvJ9mXa6vY6EwPiXOY1o7KjMye22k0OJA",
@@ -33,9 +34,11 @@ def envia_tarefas_firebase(title, desc, prior):
                     }
             db.child("tasks").child(title.upper()).set(data, user['idToken'])
         except Exception:
-            Snackbar(text="Erro ao enviar os dados!").open()
+            texto = "Erro ao adicionar tarefa!"
+            show_snackbar(texto)
         else:
-            Snackbar(text="Tarefa adicionada com sucesso!").open()
+            texto = "Adicionado com sucesso!"
+            show_snackbar(texto)
             return True
         
 def inicia_tarefas_firebase(title, resp):
@@ -53,11 +56,32 @@ def inicia_tarefas_firebase(title, resp):
                     }
             db.child("tasks").child(title.upper()).update(data, user['idToken'])
         except Exception:
-            Snackbar(text="Erro ao iniciar tarefa!").open()
+            texto = "Erro ao iniciar tarefa!"
+            show_snackbar(texto)
         else:
-            Snackbar(text="Tarefa iniciada com sucesso!").open()
+            texto = "iniciado com sucesso!"
+            show_snackbar(texto)
             return True
-
+        
+def show_snackbar(textosnack):
+    snackbar = MDSnackbar(
+    MDLabel(
+        text=textosnack,
+        theme_text_color="Custom",
+        text_color="#393231",
+    ),
+    MDSnackbarCloseButton(
+        icon="check",
+        theme_text_color="Custom",
+        text_color="#8E353C",
+        _no_ripple_effect=True,
+    ),
+    y=24,
+    pos_hint={"center_x": 0.5},
+    size_hint_x=1,
+    md_bg_color="AAFF00",
+    )
+    snackbar.open()
 
 
    

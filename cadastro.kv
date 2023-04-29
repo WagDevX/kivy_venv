@@ -64,7 +64,7 @@ Screen:
             font_size: "25sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.13}
             on_press: 
-                if app.envia_dados_firebase(name.text, mail.text, pnum.text, password.text, user.text, birth.text): Snackbar(text="Cadastrado com Sucesso!").open()
+                if app.envia_dados_firebase(name.text, mail.text, pnum.text, password.text, user.text, birth.text): app.show_snackbar("Cadastrado com Sucesso!")
 
         Widget:
             size_hint_y: None

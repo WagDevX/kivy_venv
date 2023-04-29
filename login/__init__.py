@@ -16,7 +16,7 @@ def verifica_dados_firebase(self, user, password, logado_antes=False):
         firebase = pyrebase.initialize_app(firebaseConfig)
         auth = firebase.auth()
         db = firebase.database()
-        au = auth.sign_in_with_email_and_password("admin@admin.com", "123456") 
+        au = auth.sign_in_with_email_and_password("admin@admin.com.br", "123456") 
         try:
             aut = auth.sign_in_with_email_and_password(user, password)
         except Exception:

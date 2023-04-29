@@ -12,8 +12,7 @@ MDScreen:
         MDLabel:
             id: resp
             text: "Ninguém"
-            opacity: 0.0
-                     
+            opacity: 0.0                     
         CampoDados:
             id: task_title
             hint_text: "Título da tarefa"
@@ -48,4 +47,5 @@ MDScreen:
             pos_hint: {"center_x": .5, "center_y": .20}
             on_press:
                 envia_tarefas_firebase(task_title.text.strip(), task_description.text.strip(), priority.text.strip())
-                app.adicionar_tarefa(task_title.text, task_description.text, priority.text, resp.text,False, False)
+                app.adicionar_tarefa(task_title.text, task_description.text, priority.text, resp.text,False)
+                

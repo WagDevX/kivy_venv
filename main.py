@@ -1,5 +1,5 @@
 from kivy.lang import Builder
-from kivymd.uix.snackbar import Snackbar
+from kivymd.uix.snackbar import MDSnackbar,MDSnackbarCloseButton
 from kivymd.app import MDApp
 from kivymd.uix.list import TwoLineAvatarIconListItem
 from kivy.uix.screenmanager import ScreenManager, Screen
@@ -22,6 +22,7 @@ import pyrebase
 import json
 from kivy.properties import StringProperty
 from kivy.core.text import LabelBase
+
 
 
 firebaseConfig = {
@@ -99,7 +100,7 @@ class InventApp(MDApp):
 
     def build(self):
         self.theme_cls.primary_palette = "Blue"
-        self.theme_cls.theme_style = "Light"
+        self.theme_cls.theme_style = "Dark"
         self.screen_manager = ScreenManager()
         self.screen_manager.add_widget(Builder.load_file('login.kv'))
         self.screen_manager.add_widget(Builder.load_file('main.kv'))
@@ -108,24 +109,23 @@ class InventApp(MDApp):
         self.screen_manager.add_widget(self.tela_cadastro)
         return self.screen_manager
     
-    def dialogo_confirmacao_tarefa(self,widget, bot=True):
-        if bot == False:
-            confirmation_dialog = MDDialog(
-                title="Confirmação",
-                text="Você tem certeza de que deseja iniciar a tarefa?",
-                buttons=[
-                    MDFlatButton(
-                        text="Cancelar", 
-                        on_release=lambda *args: confirmation_dialog.dismiss()
-                    ),
-                    MDFlatButton(
-                        text="Sim", 
-                        on_press=lambda *args: inicia_tarefas_firebase(widget.id, self.usuario_logado), 
-                        on_release=lambda *args: confirmation_dialog.dismiss()
-                    ),
-                ],
-            )
-            confirmation_dialog.open()
+    def dialogo_confirmacao_tarefa(self,widget):
+        confirmation_dialog = MDDialog(
+            title="Confirmação",
+            text="Você tem certeza de que deseja iniciar a tarefa?",
+            buttons=[
+                MDFlatButton(
+                    text="Cancelar", 
+                    on_release=lambda *args: confirmation_dialog.dismiss()
+                ),
+                MDFlatButton(
+                    text="Sim", 
+                    on_press=lambda *args: inicia_tarefas_firebase(widget.id, self.usuario_logado), 
+                    on_release=lambda *args: confirmation_dialog.dismiss()
+                ),
+            ],
+        )
+        confirmation_dialog.open()
         
     def show_confirmation_dialog(self):
         if not self.dialog3:
@@ -150,7 +150,7 @@ class InventApp(MDApp):
         self.dialog3.open()
 
     def on_start(self):
-        self.pega_tarefas_firebase(True)
+        self.pega_tarefas_firebase()
         if not self.login_checked:
             try:
                 with open('dados_login.json', 'r') as f:
@@ -186,6 +186,26 @@ class InventApp(MDApp):
                 ],
             )
         self.dialog.open()
+
+    def show_snackbar(self, textosnack):
+            self.snackbar = MDSnackbar(
+            MDLabel(
+                text=textosnack,
+                theme_text_color="Custom",
+                text_color="#393231",
+            ),
+            MDSnackbarCloseButton(
+                icon="check",
+                theme_text_color="Custom",
+                text_color="#8E353C",
+                _no_ripple_effect=True,
+            ),
+            y=24,
+            pos_hint={"center_x": 0.5},
+            size_hint_x=1,
+            md_bg_color="AAFF00",
+            )
+            self.snackbar.open()
 
     def show_alert_login(self):
         if not self.dialog2:
@@ -237,7 +257,7 @@ class InventApp(MDApp):
         date_dialog.bind(on_save=self.on_save, on_cancel=self.on_cancel)
         date_dialog.open()  
 
-    def adicionar_tarefa(self, titulo, descricao, prioridade, responsavel, status, login=False):
+    def adicionar_tarefa(self, titulo, descricao, prioridade, responsavel, status):
         if status == True:
             ico = "check-all"
             botao = "Tarefa iniciada"
@@ -279,42 +299,43 @@ class InventApp(MDApp):
             line_color=(0, 0, 0, 0),
             pos_hint={"bottom": 1, "left": 1},
             id=titulo,
-            on_press=lambda *args: self.dialogo_confirmacao_tarefa(task_button,bot),
+            on_press=lambda *args: self.dialogo_confirmacao_tarefa(task_button),
         )
         layout.add_widget(task_button)
 
         card.add_widget(layout)
         tasks_layout = self.root.get_screen('main').ids.tasks
         tasks_layout.add_widget(card)
-        if login == False:
-            Snackbar(text="Tarefas adicionadas com sucesso!").open() 
+        if self.usuario_logado != None:
+            texto = "Atualizado com sucesso!"
+            self.show_snackbar(texto)
          
-    def pega_tarefas_firebase(self, logado=False):
-            firebase = pyrebase.initialize_app(firebaseConfig)
-            auth = firebase.auth()
-            db = firebase.database()
-            au = auth.sign_in_with_email_and_password("admin@admin.com", "123456") 
-            user_ref = db.child('tasks')
-            task_data = user_ref.get(au['idToken']).val()
-            dados_tarefas = []
-            sorted_tasks = sorted(task_data.items(), key=lambda x: x[1]['Prioridade'])
-            for task_id, task_data in sorted_tasks:
-                Descricao = task_data["Descricao"]
-                Finalizada = task_data["Finalizada"]
-                Prioridade = task_data["Prioridade"]
-                Responsável = task_data["Responsável"]
-                Status = task_data["Status"]
-                Titulo = task_data["Titulo"]
-                self.adicionar_tarefa(Titulo, Descricao, Prioridade, Responsável, Status, logado)
-                tarefa = {'Descricao': Descricao, 
-                    'Finalizada': Finalizada, 
-                    'Prioridade': Prioridade,
-                    'Responsável': Responsável,
-                    'Status': Status,
-                    'Titulo': Titulo}
-                dados_tarefas.append(tarefa)
-                with open('dados_tarefas.json', 'w') as f:
-                    json.dump(dados_tarefas, f)    
+    def pega_tarefas_firebase(self):
+        firebase = pyrebase.initialize_app(firebaseConfig)
+        auth = firebase.auth()
+        db = firebase.database()
+        au = auth.sign_in_with_email_and_password("admin@admin.com.br", "123456") 
+        user_ref = db.child('tasks')
+        task_data = user_ref.get(au['idToken']).val()
+        dados_tarefas = []
+        sorted_tasks = sorted(task_data.items(), key=lambda x: x[1]['Prioridade'])
+        for task_id, task_data in sorted_tasks:
+            Descricao = task_data["Descricao"]
+            Finalizada = task_data["Finalizada"]
+            Prioridade = task_data["Prioridade"]
+            Responsável = task_data["Responsável"]
+            Status = task_data["Status"]
+            Titulo = task_data["Titulo"]
+            self.adicionar_tarefa(Titulo, Descricao, Prioridade, Responsável, Status)
+            tarefa = {'Descricao': Descricao, 
+                'Finalizada': Finalizada, 
+                'Prioridade': Prioridade,
+                'Responsável': Responsável,
+                'Status': Status,
+                'Titulo': Titulo}
+            dados_tarefas.append(tarefa)
+            with open('dados_tarefas.json', 'w') as f:
+                json.dump(dados_tarefas, f)    
             
     LabelBase.register(name='Kumbh',
                     fn_regular='KumbhSans.ttf')

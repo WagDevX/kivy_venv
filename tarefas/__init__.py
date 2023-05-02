@@ -16,7 +16,7 @@ firebaseConfig = {
 
 def envia_tarefas_firebase(title, desc, prior):
         agora = datetime.datetime.now()
-        agora_sem_milissegundos = agora.strftime('%Y-%m-%d %H:%M:%S')
+        agora_sem_milissegundos = agora.strftime("%d/%m/%y %H:%M")
         firebase = pyrebase.initialize_app(firebaseConfig)
         auth = firebase.auth()
         db = firebase.database()
@@ -27,9 +27,9 @@ def envia_tarefas_firebase(title, desc, prior):
                     "Prioridade": prior,
                     "Status": False,
                     "Finalizada": False,
-                    "Responsável": "Ninguém",
-                    "Data_in": None,
-                    "Data_fim": None,
+                    "Responsável": "Ninguém ainda!",
+                    "Data_in": "None",
+                    "Data_fim": "None",
                     "Data_criacao": agora_sem_milissegundos
                     }
             db.child("tasks").child(title.upper()).set(data, user['idToken'])
@@ -43,7 +43,7 @@ def envia_tarefas_firebase(title, desc, prior):
         
 def inicia_tarefas_firebase(title,desc, prio, resp):
         agora = datetime.datetime.now()
-        agora_sem_milissegundos = agora.strftime('%Y-%m-%d %H:%M:%S')
+        agora_sem_milissegundos = agora.strftime("%d/%m/%y %H:%M")
         firebase = pyrebase.initialize_app(firebaseConfig)
         auth = firebase.auth()
         db = firebase.database()
@@ -56,7 +56,7 @@ def inicia_tarefas_firebase(title,desc, prio, resp):
                     "Finalizada": False,
                     "Responsável": resp,
                     "Data_in": agora_sem_milissegundos,
-                    "Data_fim": None,
+                    "Data_fim": "None",
                     }
             db.child("tasks").child(title.upper()).set(data, user['idToken'])
         except Exception:
@@ -86,5 +86,30 @@ def show_snackbar(textosnack):
     md_bg_color="AAFF00",
     )
     snackbar.open()
-            
+
+def finaliza_tarefas_firebase(title,desc, prio, resp, data_in):
+        agora = datetime.datetime.now()
+        agora_sem_milissegundos = agora.strftime("%d/%m/%y %H:%M")
+        firebase = pyrebase.initialize_app(firebaseConfig)
+        auth = firebase.auth()
+        db = firebase.database()
+        user = auth.sign_in_with_email_and_password("admin@admin.com", "123456") 
+        try:
+            data = {"Titulo": title,
+                    "Descricao": desc,
+                    "Prioridade": prio,
+                    "Status": True,
+                    "Finalizada": True,
+                    "Responsável": resp,
+                    "Data_fim": agora_sem_milissegundos,
+                    "Data_in": data_in,
+                    }
+            db.child("tasks").child(title.upper()).set(data, user['idToken'])
+        except Exception:
+            texto = "Erro ao iniciar tarefa!"
+            show_snackbar(texto)
+        else:
+            texto = "iniciado com sucesso!"
+            show_snackbar(texto)
+            return True            
                    

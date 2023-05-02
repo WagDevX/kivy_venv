@@ -18,12 +18,12 @@ MDScreen:
                 MDTabs:
                     id: tabs
                     Tab:
-                        title: "Tarefas"
+                        title: "Tarefas disponíveis"
                         icon: "list-status"
                         MDScrollView:
                             MDBoxLayout:
                                 id: tasks
-                                padding: dp(10)
+                                padding: 10
                                 spacing: 10
                                 size_hint_y: None
                                 orientation: "vertical"
@@ -40,34 +40,32 @@ MDScreen:
                                 icon_size: "40sp"
                                 on_press:
                                     root.manager.transition = SwapTransition()
-                                    root.manager.current = "tasks"
+                                    root.manager.current = "tasks_send"
                                     app.screen_manager.transition = SlideTransition()
-                        MDBoxLayout:
-                            id: box
-                            spacing: "56dp"
-                            adaptive_size: True
-                            pos_hint: {"center_x": .5, "center_y": .10}
-                            MDIconButton:
-                                icon: "refresh-circle"
-                                icon_size: "40sp"
-                                on_press: 
-                                    tasks.clear_widgets() 
-                                    app.pega_tarefas_firebase()
                     Tab:
-                        title: "Tarefas Iniciadas"
+                        title: "Iniciadas"
                         icon: "counter"
                         MDScrollView:
                             MDBoxLayout:
                                 id: tasks_ongoing
-                                padding: dp(10)
+                                padding: 10
                                 spacing: 10
                                 size_hint_y: None
                                 orientation: "vertical"
                                 height: self.minimum_height
                                 on_minimum_height: self.height = self.minimum_height
                     Tab:
-                        title: "Validade"
+                        title: "Finalizadas"
                         icon: "note-minus-outline"
+                        MDScrollView:
+                            MDBoxLayout:
+                                id: tasks_finished
+                                padding: 10
+                                spacing: 10
+                                size_hint_y: None
+                                orientation: "vertical"
+                                height: self.minimum_height
+                                on_minimum_height: self.height = self.minimum_height
 
                 
 
@@ -206,6 +204,9 @@ MDScreen:
     font_size: "18sp"
 
 <MD3Card>
+    line_color: 0.1, 0.9, 0.9, 0.8
     height: "200dp"
     padding: "10dp", "10dp"
     size_hint: "1dp", None
+    style: "outlined" 
+    radius: [10,10,10,10]

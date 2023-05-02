@@ -16,7 +16,7 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.list import TwoLineListItem
 from kivymd.uix.relativelayout import MDRelativeLayout
 from kivymd.uix.button import MDRectangleFlatIconButton
-from tarefas import inicia_tarefas_firebase
+from tarefas import inicia_tarefas_firebase, finaliza_tarefas_firebase,envia_tarefas_firebase
 from kivymd.font_definitions import theme_font_styles
 import pyrebase
 import json
@@ -109,14 +109,14 @@ class InventApp(MDApp):
     login_checked = False
     @mainthread
     def stream_handler(self, message):
-        print(message["event"]) # tipo de evento
-        caminho = message["path"] # caminho do evento # dados do evento
+        print(message["event"]) 
+        caminho = message["path"] 
         data = message["data"]
         if caminho == "/":
             for i in data.values():
-                self.adicionar_tarefa(i["Titulo"],i["Descricao"],i["Prioridade"],i["Responsável"],i["Status"])
+                self.adicionar_tarefa(i["Titulo"],i["Descricao"],i["Prioridade"],i["Responsável"],i["Status"],i["Finalizada"], i["Data_in"], i["Data_fim"])
         else:
-            self.adicionar_tarefa(data["Titulo"],data["Descricao"],data["Prioridade"],data["Responsável"],data["Status"])
+            self.adicionar_tarefa(data["Titulo"],data["Descricao"],data["Prioridade"],data["Responsável"],data["Status"], data["Finalizada"],data["Data_in"],data["Data_fim"])
 
 
     def on_stop(self):
@@ -125,7 +125,7 @@ class InventApp(MDApp):
     def build(self):
         self.theme_cls.material_style = "M3"
         self.theme_cls.primary_palette = "Blue"
-        self.theme_cls.theme_style = "Dark"
+        self.theme_cls.theme_style = "Light"
         self.screen_manager = ScreenManager()
         self.screen_manager.add_widget(Builder.load_file('login.kv'))
         self.screen_manager.add_widget(Builder.load_file('main.kv'))
@@ -134,7 +134,33 @@ class InventApp(MDApp):
         self.screen_manager.add_widget(self.tela_cadastro)
         return self.screen_manager
 
-    
+    def validate_task_fields(self):
+        title = self.root.get_screen('tasks_send').ids.task_title.text.strip()
+        description = self.root.get_screen('tasks_send').ids.task_description.text.strip()
+        priority = self.root.get_screen('tasks_send').ids.priority.text.strip()
+
+        if not title or not description or not priority:
+            # Caso algum campo esteja vazio, exibe uma mensagem de erro
+            self.show_error_dialog("Por favor, preencha todos os campos.")
+            return
+
+        if priority not in ["1", "2", "3"]:
+            # Caso a prioridade não seja 1, 2 ou 3, exibe uma mensagem de erro
+            self.show_error_dialog("Por favor, selecione uma prioridade válida (1, 2 ou 3).")
+            return
+
+        # Caso todos os campos estejam preenchidos corretamente, envia a tarefa para o Firebase
+        envia_tarefas_firebase(title, description, priority)
+
+    def show_error_dialog(self, message):
+        dialog = MDDialog(
+            title="Erro",
+            text=message,
+            size_hint=(0.7, None),
+            height="200dp",
+            auto_dismiss=True
+        )
+        dialog.open()
     
     def dialogo_confirmacao_tarefa(self,widget, desc, prio, resp,  status=False):
         if status == False:
@@ -157,27 +183,27 @@ class InventApp(MDApp):
         else:
             return
         
-    def show_confirmation_dialog(self):
-        if not self.dialog3:
-            self.dialog3 = MDDialog(
-                title="ADICIONAR TAREFA:",
-                type="custom",
-                content_cls=Content(),
+    def dialogo_finaliza_tarefa(self,widget, desc, prio, data_in,  status=False):
+        if status == False:
+            confirmation_dialog = MDDialog(
+                title="Confirmação",
+                text="Você tem certeza de que deseja finalizar a tarefa?",
                 buttons=[
                     MDFlatButton(
-                        text="CANCELAR",
-                        theme_text_color="Custom",
-                        text_color=self.theme_cls.primary_color,
-                        on_press=self.fechar_dialogo3
+                        text="Cancelar", 
+                        on_release=lambda *args: confirmation_dialog.dismiss()
                     ),
                     MDFlatButton(
-                        text="ADICIONAR",
-                        theme_text_color="Custom",
-                        text_color=self.theme_cls.primary_color,
+                        text="Sim", 
+                        on_press=lambda *args: finaliza_tarefas_firebase(widget.id, desc, prio, self.usuario_logado, data_in), 
+                        on_release=lambda *args: confirmation_dialog.dismiss()
                     ),
                 ],
             )
-        self.dialog3.open()
+            confirmation_dialog.open()
+        else:
+            return
+        
     def on_start(self):
         self.my_stream = self.db.child("tasks").stream(self.stream_handler, self.user['idToken'])
         '''for k, v in data.items():
@@ -295,26 +321,33 @@ class InventApp(MDApp):
         date_dialog.bind(on_save=self.on_save, on_cancel=self.on_cancel)
         date_dialog.open()  
 
-    def adicionar_tarefa(self, titulo, descricao, prioridade, responsavel, status):
+    def adicionar_tarefa(self, titulo, descricao, prioridade, responsavel, status, status_fim, data_in, data_fin):
         tasks_layout = self.root.get_screen('main').ids.tasks
         if status == True:
             ico = "clock-check"
-            botao = "Tarefa iniciada"
+            botao = f"Iniciado {data_in}"
         else:
             ico = "clock-alert"
             botao = "Iniciar tarefa"
+        if status_fim == True:
+            icof = "check-all"
+            botaof = f"Finalizado {data_fin}"
+        else:
+            icof = "checkbox-marked-outline"
+            botaof = "Finalizar"
+
         if '1' in prioridade:
             pri = '1'
-            prio = "ff1100"
+            prio = "#f8f5f4"
         elif '2' in prioridade:
             pri = '2'
-            prio = "5B8900"
+            prio = "#f8f5f4"
         elif '3' in prioridade:
             pri = '3'
-            prio = "007989"
-        if titulo in self.widgets:
+            prio = "#f8f5f4"
+        if titulo.upper() in self.widgets:
             tasks_layout = self.root.get_screen('main').ids.tasks
-            tasks_layout.remove_widget(self.widgets[titulo])
+            tasks_layout.remove_widget(self.widgets[titulo.upper()])
 
         card = MD3Card(
             md_bg_color=prio,
@@ -326,12 +359,12 @@ class InventApp(MDApp):
             pos_hint={"top": 1, "right": 1},
             font_style="H5",
             text=titulo,
-            secondary_text=f"{responsavel} está fazendo!",
+            secondary_text=f"Reponsável: {responsavel}!",
         )
         layout.add_widget(titulo_widget)
 
         descricao_widget = MDLabel(
-            pos_hint={"center_x": 0.51, "center_y": 0.43},
+            pos_hint={"middle": 1, "left": 20},
             text=descricao,
             font_style="Subtitle1",
         )
@@ -346,7 +379,7 @@ class InventApp(MDApp):
         layout.add_widget(priodidade_widget)
 
         resp_widget = MDLabel(
-            pos_hint={"center_x": 0.51, "center_y": 0.43},
+            pos_hint={"middle": 1, "left": 1},
             text=responsavel,
             font_style="Subtitle1",
             opacity="0.0",
@@ -364,51 +397,26 @@ class InventApp(MDApp):
         layout.add_widget(task_button)
 
         finish_button = MDRectangleFlatIconButton(
-            text="Finalizar",
-            icon="checkbox-marked-outline",
+            text=botaof,
+            icon=icof,
             line_color=(0, 0, 0, 0),
             pos_hint={"bottom": 1, "right": 1},
             id=titulo,
-            #on_press=lambda *args:,
+            on_press=lambda *args: self.dialogo_finaliza_tarefa(task_button, descricao_widget.text, priodidade_widget.text, data_in, status_fim),
         )
         if status == True:
             layout.add_widget(finish_button)
         if status == True:
             tasks_layout = self.root.get_screen('main').ids.tasks_ongoing
+        if status_fim == True:
+            tasks_layout = self.root.get_screen('main').ids.tasks_finished
     
         card.add_widget(layout)
         tasks_layout.add_widget(card)
-        self.widgets[titulo] = card
-        if self.usuario_logado != None:
-            texto = "Atualizado com sucesso!"
-            self.show_snackbar(texto)
+        self.widgets[titulo.upper()] = card
+        texto = "Tarefas atualizadas!"
+        self.show_snackbar(texto)
          
-    def pega_tarefas_firebase(self):
-        firebase = pyrebase.initialize_app(firebaseConfig)
-        auth = firebase.auth()
-        db = firebase.database()
-        au = auth.sign_in_with_email_and_password("admin@admin.com.br", "123456") 
-        user_ref = db.child('tasks')
-        task_data = user_ref.get(au['idToken']).val()
-        dados_tarefas = []
-        sorted_tasks = sorted(task_data.items(), key=lambda x: x[1]['Prioridade'])
-        for task_id, task_data in sorted_tasks:
-            Descricao = task_data["Descricao"]
-            Finalizada = task_data["Finalizada"]
-            Prioridade = task_data["Prioridade"]
-            Responsável = task_data["Responsável"]
-            Status = task_data["Status"]
-            Titulo = task_data["Titulo"]
-            self.adicionar_tarefa(Titulo, Descricao, Prioridade, Responsável, Status)
-            tarefa = {'Descricao': Descricao, 
-                'Finalizada': Finalizada, 
-                'Prioridade': Prioridade,
-                'Responsável': Responsável,
-                'Status': Status,
-                'Titulo': Titulo}
-            dados_tarefas.append(tarefa)
-            with open('dados_tarefas.json', 'w') as f:
-                json.dump(dados_tarefas, f)    
     LabelBase.register(name='Kumbh',
                         fn_regular='KumbhSans.ttf')
 InventApp().run()

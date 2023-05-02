@@ -1,6 +1,6 @@
 #:import envia_tarefas_firebase tarefas.envia_tarefas_firebase
 MDScreen:
-    name: 'tasks'
+    name: 'tasks_send'
     FloatLayout:
         MDIconButton:
             icon: "arrow-collapse-left"
@@ -46,5 +46,5 @@ MDScreen:
             line_color: 0, 0, 0, 0
             pos_hint: {"center_x": .5, "center_y": .20}
             on_press:
-                envia_tarefas_firebase(task_title.text.strip(), task_description.text.strip(), priority.text.strip())
+                app.validate_task_fields()
                 

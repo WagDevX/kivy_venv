@@ -22,6 +22,7 @@ import pyrebase
 import json
 from kivy.properties import StringProperty
 from kivy.core.text import LabelBase
+from kivy.clock import mainthread
 
 class userconfigscreen(Screen):
     pass
@@ -92,12 +93,34 @@ class ListaItemsComImg(TwoLineAvatarIconListItem):
     pass
     '''source =StringProperty()'''
     
+    
 class InventApp(MDApp):
+    widgets = {}
+    
+    firebase = pyrebase.initialize_app(firebaseConfig)
+    auth = firebase.auth()
+    db = firebase.database()
+    user = auth.sign_in_with_email_and_password("admin@admin.com", "123456") 
+
     usuario_logado = None
     dialog = None
     dialog2 = None
     dialog3 = None
     login_checked = False
+    @mainthread
+    def stream_handler(self, message):
+        print(message["event"]) # tipo de evento
+        caminho = message["path"] # caminho do evento # dados do evento
+        data = message["data"]
+        if caminho == "/":
+            for i in data.values():
+                self.adicionar_tarefa(i["Titulo"],i["Descricao"],i["Prioridade"],i["Responsável"],i["Status"])
+        else:
+            self.adicionar_tarefa(data["Titulo"],data["Descricao"],data["Prioridade"],data["Responsável"],data["Status"])
+
+
+    def on_stop(self):
+        self.my_stream.close()
 
     def build(self):
         self.theme_cls.material_style = "M3"
@@ -110,24 +133,29 @@ class InventApp(MDApp):
         self.screen_manager.add_widget(Builder.load_file('tarefas.kv'))
         self.screen_manager.add_widget(self.tela_cadastro)
         return self.screen_manager
+
     
-    def dialogo_confirmacao_tarefa(self,widget):
-        confirmation_dialog = MDDialog(
-            title="Confirmação",
-            text="Você tem certeza de que deseja iniciar a tarefa?",
-            buttons=[
-                MDFlatButton(
-                    text="Cancelar", 
-                    on_release=lambda *args: confirmation_dialog.dismiss()
-                ),
-                MDFlatButton(
-                    text="Sim", 
-                    on_press=lambda *args: inicia_tarefas_firebase(widget.id, self.usuario_logado), 
-                    on_release=lambda *args: confirmation_dialog.dismiss()
-                ),
-            ],
-        )
-        confirmation_dialog.open()
+    
+    def dialogo_confirmacao_tarefa(self,widget, desc, prio, resp,  status=False):
+        if status == False:
+            confirmation_dialog = MDDialog(
+                title="Confirmação",
+                text="Você tem certeza de que deseja iniciar a tarefa?",
+                buttons=[
+                    MDFlatButton(
+                        text="Cancelar", 
+                        on_release=lambda *args: confirmation_dialog.dismiss()
+                    ),
+                    MDFlatButton(
+                        text="Sim", 
+                        on_press=lambda *args: inicia_tarefas_firebase(widget.id, desc, prio, self.usuario_logado), 
+                        on_release=lambda *args: confirmation_dialog.dismiss()
+                    ),
+                ],
+            )
+            confirmation_dialog.open()
+        else:
+            return
         
     def show_confirmation_dialog(self):
         if not self.dialog3:
@@ -150,9 +178,17 @@ class InventApp(MDApp):
                 ],
             )
         self.dialog3.open()
-
     def on_start(self):
-        self.pega_tarefas_firebase()
+        self.my_stream = self.db.child("tasks").stream(self.stream_handler, self.user['idToken'])
+        '''for k, v in data.items():
+            for l, i in v.items():
+                titulo = i[7]
+                status = i[6]
+                responsavel = i[5]
+                prioridade = i[4]
+                descricao = i[2]
+                self.adicionar_tarefa(titulo, descricao, prioridade, responsavel, status)'''
+        #self.pega_tarefas_firebase()
         if not self.login_checked:
             try:
                 with open('dados_login.json', 'r') as f:
@@ -260,20 +296,26 @@ class InventApp(MDApp):
         date_dialog.open()  
 
     def adicionar_tarefa(self, titulo, descricao, prioridade, responsavel, status):
+        tasks_layout = self.root.get_screen('main').ids.tasks
         if status == True:
-            ico = "check-all"
-            botao = "Tarefa iniciada"
-            bot  = True
-        else:
             ico = "clock-check"
+            botao = "Tarefa iniciada"
+        else:
+            ico = "clock-alert"
             botao = "Iniciar tarefa"
-            bot  = False
         if '1' in prioridade:
+            pri = '1'
             prio = "ff1100"
         elif '2' in prioridade:
+            pri = '2'
             prio = "5B8900"
         elif '3' in prioridade:
+            pri = '3'
             prio = "007989"
+        if titulo in self.widgets:
+            tasks_layout = self.root.get_screen('main').ids.tasks
+            tasks_layout.remove_widget(self.widgets[titulo])
+
         card = MD3Card(
             md_bg_color=prio,
         )
@@ -295,19 +337,48 @@ class InventApp(MDApp):
         )
         layout.add_widget(descricao_widget)
 
+        priodidade_widget = MDLabel(
+            pos_hint={"center_x": 0.51, "center_y": 0.43},
+            text=pri,
+            font_style="Subtitle1",
+            opacity="0.0",
+        )
+        layout.add_widget(priodidade_widget)
+
+        resp_widget = MDLabel(
+            pos_hint={"center_x": 0.51, "center_y": 0.43},
+            text=responsavel,
+            font_style="Subtitle1",
+            opacity="0.0",
+        )
+        layout.add_widget(resp_widget)
+
         task_button = MDRectangleFlatIconButton(
             text=botao,
             icon=ico,
             line_color=(0, 0, 0, 0),
             pos_hint={"bottom": 1, "left": 1},
             id=titulo,
-            on_press=lambda *args: self.dialogo_confirmacao_tarefa(task_button),
+            on_press=lambda *args: self.dialogo_confirmacao_tarefa(task_button, descricao_widget.text, priodidade_widget.text, resp_widget.text, status),
         )
         layout.add_widget(task_button)
 
+        finish_button = MDRectangleFlatIconButton(
+            text="Finalizar",
+            icon="checkbox-marked-outline",
+            line_color=(0, 0, 0, 0),
+            pos_hint={"bottom": 1, "right": 1},
+            id=titulo,
+            #on_press=lambda *args:,
+        )
+        if status == True:
+            layout.add_widget(finish_button)
+        if status == True:
+            tasks_layout = self.root.get_screen('main').ids.tasks_ongoing
+    
         card.add_widget(layout)
-        tasks_layout = self.root.get_screen('main').ids.tasks
         tasks_layout.add_widget(card)
+        self.widgets[titulo] = card
         if self.usuario_logado != None:
             texto = "Atualizado com sucesso!"
             self.show_snackbar(texto)
@@ -338,7 +409,6 @@ class InventApp(MDApp):
             dados_tarefas.append(tarefa)
             with open('dados_tarefas.json', 'w') as f:
                 json.dump(dados_tarefas, f)    
-            
     LabelBase.register(name='Kumbh',
-                    fn_regular='KumbhSans.ttf')
+                        fn_regular='KumbhSans.ttf')
 InventApp().run()

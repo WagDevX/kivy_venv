@@ -13,7 +13,7 @@ package.domain = org.test
 source.dir = .
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas
+source.include_exts = 
 
 # (list) List of inclusions using pattern matching
 #source.include_patterns = assets/*,images/*.png
@@ -37,7 +37,8 @@ version = 0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,Kivy,kivymd==1.0.2,pyrebase4,requests,requests_toolbelt,gcloud,oauth2client,python-jwt,pycryptodome,urllib3,charset_normalizer==2.1.1,idna,httplib2,pyparsing,pyasn1,pyasn1_modules,rsa,googleapis-common-protos,protobuf,jwcrypto,cryptography,wrapt,jws,certifi,pillow
+requirements = python3,certifi==2022.12.7,kivy==master,https://github.com/kivymd/KivyMD/archive/master.zip ,pyrebase4==4.6.0,requests==2.28.2,requests_toolbelt==0.7.1,gcloud==0.18.3,oauth2client==4.1.2,python-jwt==2.0.1,pycryptodome==3.6.4,urllib3==1.26.15,charset_normalizer==2.1.1,idna==3.4,httplib2==0.22.0,pyparsing==3.0.9,pyasn1==0.4.8,pyasn1_modules==0.2.8,rsa==4.9,googleapis-common-protos,protobuf,jwcrypto,cryptography,wrapt,jws,pillow
+
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes

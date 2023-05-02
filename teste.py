@@ -1,97 +1,89 @@
-from kivy.lang import Builder
-from kivy.properties import ListProperty, StringProperty
+if __name__ == "__main__":
+    from kivy.lang import Builder
+    from kivy.properties import StringProperty
+    from kivy.uix.screenmanager import Screen
 
-from kivymd.color_definitions import colors
-from kivymd.uix.tab import MDTabsBase
-from kivymd.uix.boxlayout import MDBoxLayout
+    from kivymd.app import MDApp
+    from kivymd.uix.list import OneLineIconListItem
 
-demo = '''
-<Root@MDBoxLayout>
-    orientation: 'vertical'
-
-    MDTopAppBar:
-        title: app.title
-
-    MDTabs:
-        id: android_tabs
-        on_tab_switch: app.on_tab_switch(*args)
-        size_hint_y: None
-        height: "48dp"
-        tab_indicator_anim: False
-
-    RecycleView:
-        id: rv
-        key_viewclass: "viewclass"
-        key_size: "height"
-
-        RecycleBoxLayout:
-            default_size: None, dp(48)
-            default_size_hint: 1, None
-            size_hint_y: None
-            height: self.minimum_height
-            orientation: "vertical"
+    Builder.load_string(
+        """
+#:import images_path kivymd.images_path
 
 
-<ItemColor>
-    size_hint_y: None
-    height: "42dp"
+<CustomOneLineIconListItem>
 
-    MDLabel:
-        text: root.text
-        halign: "center"
+    IconLeftWidget:
+        icon: root.icon
 
 
-<Tab>
-'''
+<PreviousMDIcons>
 
-from kivy.factory import Factory
+    MDBoxLayout:
+        orientation: 'vertical'
+        spacing: dp(10)
+        padding: dp(20)
 
-from kivymd.app import MDApp
+        MDBoxLayout:
+            adaptive_height: True
 
+            MDIconButton:
+                icon: 'magnify'
 
-class Tab(MDBoxLayout, MDTabsBase):
-    pass
+            MDTextField:
+                id: search_field
+                hint_text: 'Search icon'
+                on_text: root.set_list_md_icons(self.text, True)
 
+        RecycleView:
+            id: rv
+            key_viewclass: 'viewclass'
+            key_size: 'height'
 
-class ItemColor(MDBoxLayout):
-    text = StringProperty()
-    color = ListProperty()
+            RecycleBoxLayout:
+                padding: dp(10)
+                default_size: None, dp(48)
+                default_size_hint: 1, None
+                size_hint_y: None
+                height: self.minimum_height
+                orientation: 'vertical'
+    """
+    )
 
+    class CustomOneLineIconListItem(OneLineIconListItem):
+        icon = StringProperty()
 
-class Palette(MDApp):
-    title = "Colors definitions"
+    class PreviousMDIcons(Screen):
+        def set_list_md_icons(self, text="", search=False):
+            """Builds a list of icons for the screen MDIcons."""
 
-    def build(self):
-        Builder.load_string(demo)
-        self.screen = Factory.Root()
+            def add_icon_item(name_icon):
+                self.ids.rv.data.append(
+                    {
+                        "viewclass": "CustomOneLineIconListItem",
+                        "icon": name_icon,
+                        "text": name_icon,
+                        "callback": lambda x: x,
+                    }
+                )
 
-        for name_tab in colors.keys():
-            tab = Tab(title=name_tab)
-            self.screen.ids.android_tabs.add_widget(tab)
-        return self.screen
+            self.ids.rv.data = []
+            for name_icon in md_icons.keys():
+                if search:
+                    if text in name_icon:
+                        add_icon_item(name_icon)
+                else:
+                    add_icon_item(name_icon)
 
-    def on_tab_switch(
-        self, instance_tabs, instance_tab, instance_tabs_label, tab_text
-    ):
-        self.screen.ids.rv.data = []
-        if not tab_text:
-            tab_text = 'Red'
-        for value_color in colors[tab_text]:
-            self.screen.ids.rv.data.append(
-                {
-                    "viewclass": "ItemColor",
-                    "md_bg_color": colors[tab_text][value_color],
-                    "title": value_color,
-                }
-            )
+    class MainApp(MDApp):
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+            self.screen = PreviousMDIcons()
 
-    def on_start(self):
-        self.on_tab_switch(
-            None,
-            None,
-            None,
-            self.screen.ids.android_tabs.ids.layout.children[-1].text,
-        )
+        def build(self):
+            return self.screen
 
+        def on_start(self):
+            self.screen.set_list_md_icons()
 
-Palette().run()
+    MainApp().run()

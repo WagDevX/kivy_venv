@@ -54,8 +54,17 @@ MDScreen:
                                     tasks.clear_widgets() 
                                     app.pega_tarefas_firebase()
                     Tab:
-                        title: "Iventário"
+                        title: "Tarefas Iniciadas"
                         icon: "counter"
+                        MDScrollView:
+                            MDBoxLayout:
+                                id: tasks_ongoing
+                                padding: dp(10)
+                                spacing: 10
+                                size_hint_y: None
+                                orientation: "vertical"
+                                height: self.minimum_height
+                                on_minimum_height: self.height = self.minimum_height
                     Tab:
                         title: "Validade"
                         icon: "note-minus-outline"
@@ -178,6 +187,7 @@ MDScreen:
     color_active: app.theme_cls.primary_dark
     halign: 'center'
     multiline: False
+    icon: "clock-alert"
 
 <Content>
     orientation: "vertical"

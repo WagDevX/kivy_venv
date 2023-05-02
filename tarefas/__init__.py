@@ -41,7 +41,7 @@ def envia_tarefas_firebase(title, desc, prior):
             show_snackbar(texto)
             return True
         
-def inicia_tarefas_firebase(title, resp):
+def inicia_tarefas_firebase(title,desc, prio, resp):
         agora = datetime.datetime.now()
         agora_sem_milissegundos = agora.strftime('%Y-%m-%d %H:%M:%S')
         firebase = pyrebase.initialize_app(firebaseConfig)
@@ -49,12 +49,16 @@ def inicia_tarefas_firebase(title, resp):
         db = firebase.database()
         user = auth.sign_in_with_email_and_password("admin@admin.com", "123456") 
         try:
-            data = {
+            data = {"Titulo": title,
+                    "Descricao": desc,
+                    "Prioridade": prio,
                     "Status": True,
+                    "Finalizada": False,
                     "Responsável": resp,
                     "Data_in": agora_sem_milissegundos,
+                    "Data_fim": None,
                     }
-            db.child("tasks").child(title.upper()).update(data, user['idToken'])
+            db.child("tasks").child(title.upper()).set(data, user['idToken'])
         except Exception:
             texto = "Erro ao iniciar tarefa!"
             show_snackbar(texto)
@@ -82,8 +86,5 @@ def show_snackbar(textosnack):
     md_bg_color="AAFF00",
     )
     snackbar.open()
-
-
-   
             
                    

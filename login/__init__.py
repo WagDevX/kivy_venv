@@ -19,9 +19,6 @@ def verifica_dados_firebase(self, user, password, logado_antes=False):
         au = auth.sign_in_with_email_and_password("admin@admin.com.br", "123456") 
         try:
             aut = auth.sign_in_with_email_and_password(user, password)
-        except Exception:
-            self.show_alert_login()
-        else:
             if logado_antes == False:
                 nome_de_usuario = aut['displayName']
                 user_ref = db.child('users').child(aut['displayName'])
@@ -36,10 +33,13 @@ def verifica_dados_firebase(self, user, password, logado_antes=False):
                             'nasc': birth,
                             'pnum': pnum}
                 with open('dados_login.json', 'w') as f:
-                    json.dump(dados_login, f)
+                    json.dump(dados_login, f)   
                 self.root.current = "main"
-            else:
-                self.root.current = "main"
+                self.usuario_logado = nome_de_usuario
+        except Exception:
+            self.show_alert_login()
+        else:
+            self.root.current = "main"
             return True
 def atualiza_dados_app(self):
     with open('dados_login.json', 'r') as f:

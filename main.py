@@ -23,6 +23,9 @@ import json
 from kivy.properties import StringProperty
 from kivy.core.text import LabelBase
 from kivy.clock import mainthread
+from random import sample, choice
+
+
 
 class userconfigscreen(Screen):
     pass
@@ -48,16 +51,15 @@ class Tab(MDFloatLayout, MDTabsBase):
     pass
 
 class ScreenListItems(Screen):
-    pass
-    
-    '''def on_kv_post(self, base_widget):
-        p = Produtos.select(Produtos.ean, Produtos.descricao) \
-        .order_by(Produtos.descricao)
+    def on_kv_post(self, base_widget):
+        # Carrega o arquivo JSON em um dicionário
+        with open('seu_arquivo.json',encoding='utf-8') as f:
+            data = json.load(f)
 
-        for row in p.dicts():
-            
+        # Loop através de cada item do dicionário
+        for key, value in data.items():
             sample_images = [
-                'wsol_icon.png'
+                'wsol-favicon.png'
             ]
 
             self.ids.rv.data.append(
@@ -65,38 +67,44 @@ class ScreenListItems(Screen):
                     #viewclass": "ItemImage",
                     #ImageLeftWidget": choice(sample_images),
                     "source": './images/{}'.format(choice(sample_images)),
-                    "text": str(row['ean']),
-                    "secondary_text": str(row['descricao']),
+                    "text": str(key),
+                    "secondary_text": str(value['descricao']),
                     "callback": lambda x: x,
                 }
-            )'''
-    '''def lista_a_procura(self, text="", search=False):
-        
+            )
+    def lista_a_procura(self, text="", search=False):
         self.ids.rv.data = []
-        p = Produtos.select(Produtos.ean, Produtos.descricao) \
-        .order_by(Produtos.descricao)
-        for row in p.dicts():
+
+        with open('seu_arquivo.json',encoding='utf-8') as f:
+            produtos = json.load(f)
+
+        for ean, produto in produtos.items():
             if search:
-                if (text.upper() in str(row['ean']).upper() or (text.upper() in str(row['descricao']))):
+                if text.upper() in produto['descricao'].upper():
                     self.ids.rv.data.append(
                         {
-                            #viewclass": "ItemImage",
-                            #ImageLeftWidget": choice(sample_images),
                             "source": 'wsol_icon.png',
-                            "text": str(row['ean']),
-                            "secondary_text": str(row['descricao']),
+                            "text": ean,
+                            "secondary_text": produto['descricao'],
                             "callback": lambda x: x,
                         }
-                        )'''     
+                    )
+            else:
+                self.ids.rv.data.append(
+                    {
+                        "source": 'wsol_icon.png',
+                        "text": ean,
+                        "secondary_text": produto['descricao'],
+                        "callback": lambda x: x,
+                    }
+                )
 
 class ListaItemsComImg(TwoLineAvatarIconListItem):
-    pass
-    '''source =StringProperty()'''
+    source =StringProperty()
     
     
 class InventApp(MDApp):
     widgets = {}
-    
     firebase = pyrebase.initialize_app(firebaseConfig)
     auth = firebase.auth()
     db = firebase.database()
@@ -110,13 +118,16 @@ class InventApp(MDApp):
     @mainthread
     def stream_handler(self, message):
         print(message["event"]) 
-        caminho = message["path"] 
+        caminho = message["path"]
+        id = caminho.lstrip("/") 
         data = message["data"]
         if caminho == "/":
-            for i in data.values():
-                self.adicionar_tarefa(i["Titulo"],i["Descricao"],i["Prioridade"],i["Responsável"],i["Status"],i["Finalizada"], i["Data_in"], i["Data_fim"])
+            for k, i in data.items():
+                print(k)
+                print(i)
+                self.adicionar_tarefa(k,i["Titulo"],i["Descricao"],i["Prioridade"],i["Responsável"],i["Status"],i["Finalizada"], i["Data_in"], i["Data_fim"])
         else:
-            self.adicionar_tarefa(data["Titulo"],data["Descricao"],data["Prioridade"],data["Responsável"],data["Status"], data["Finalizada"],data["Data_in"],data["Data_fim"])
+            self.adicionar_tarefa(id,data["Titulo"],data["Descricao"],data["Prioridade"],data["Responsável"],data["Status"],data["Finalizada"], data["Data_in"], data["Data_fim"])
 
 
     def on_stop(self):
@@ -157,12 +168,11 @@ class InventApp(MDApp):
             title="Erro",
             text=message,
             size_hint=(0.7, None),
-            height="200dp",
             auto_dismiss=True
         )
         dialog.open()
     
-    def dialogo_confirmacao_tarefa(self,widget, desc, prio, resp,  status=False):
+    def dialogo_confirmacao_tarefa(self,widget, title, desc, prio, resp,  status=False):
         if status == False:
             confirmation_dialog = MDDialog(
                 title="Confirmação",
@@ -174,7 +184,7 @@ class InventApp(MDApp):
                     ),
                     MDFlatButton(
                         text="Sim", 
-                        on_press=lambda *args: inicia_tarefas_firebase(widget.id, desc, prio, self.usuario_logado), 
+                        on_press=lambda *args: inicia_tarefas_firebase(widget.id, title, desc, prio, self.usuario_logado), 
                         on_release=lambda *args: confirmation_dialog.dismiss()
                     ),
                 ],
@@ -183,7 +193,9 @@ class InventApp(MDApp):
         else:
             return
         
-    def dialogo_finaliza_tarefa(self,widget, desc, prio, data_in,  status=False):
+    def dialogo_finaliza_tarefa(self,widget, title, desc, prio, data_in, resp,  status=False):
+        if resp != self.usuario_logado:
+            return
         if status == False:
             confirmation_dialog = MDDialog(
                 title="Confirmação",
@@ -195,7 +207,7 @@ class InventApp(MDApp):
                     ),
                     MDFlatButton(
                         text="Sim", 
-                        on_press=lambda *args: finaliza_tarefas_firebase(widget.id, desc, prio, self.usuario_logado, data_in), 
+                        on_press=lambda *args: finaliza_tarefas_firebase(widget.id, title, desc, prio, self.usuario_logado, data_in), 
                         on_release=lambda *args: confirmation_dialog.dismiss()
                     ),
                 ],
@@ -206,15 +218,6 @@ class InventApp(MDApp):
         
     def on_start(self):
         self.my_stream = self.db.child("tasks").stream(self.stream_handler, self.user['idToken'])
-        '''for k, v in data.items():
-            for l, i in v.items():
-                titulo = i[7]
-                status = i[6]
-                responsavel = i[5]
-                prioridade = i[4]
-                descricao = i[2]
-                self.adicionar_tarefa(titulo, descricao, prioridade, responsavel, status)'''
-        #self.pega_tarefas_firebase()
         if not self.login_checked:
             try:
                 with open('dados_login.json', 'r') as f:
@@ -264,9 +267,9 @@ class InventApp(MDApp):
                 text_color="#8E353C",
                 _no_ripple_effect=True,
             ),
-            y=24,
+            y=80,
             pos_hint={"center_x": 0.5},
-            size_hint_x=1,
+            size_hint_x=0.9,
             md_bg_color="AAFF00",
             )
             self.snackbar.open()
@@ -321,33 +324,35 @@ class InventApp(MDApp):
         date_dialog.bind(on_save=self.on_save, on_cancel=self.on_cancel)
         date_dialog.open()  
 
-    def adicionar_tarefa(self, titulo, descricao, prioridade, responsavel, status, status_fim, data_in, data_fin):
-        tasks_layout = self.root.get_screen('main').ids.tasks
+    def adicionar_tarefa(self,key, titulo, descricao, prioridade, responsavel, status, status_fim, data_in, data_fin):
+        
         if status == True:
             ico = "clock-check"
-            botao = f"Iniciado {data_in}"
+            botao = f"{data_in}"
         else:
             ico = "clock-alert"
             botao = "Iniciar tarefa"
         if status_fim == True:
             icof = "check-all"
-            botaof = f"Finalizado {data_fin}"
+            botaof = f"{data_fin}"
         else:
             icof = "checkbox-marked-outline"
             botaof = "Finalizar"
 
         if '1' in prioridade:
             pri = '1'
-            prio = "#f8f5f4"
+            prio = "#f4dedc"
         elif '2' in prioridade:
             pri = '2'
-            prio = "#f8f5f4"
+            prio = "#f6eeee"
         elif '3' in prioridade:
             pri = '3'
             prio = "#f8f5f4"
-        if titulo.upper() in self.widgets:
-            tasks_layout = self.root.get_screen('main').ids.tasks
-            tasks_layout.remove_widget(self.widgets[titulo.upper()])
+        if key in self.widgets:
+            tasks_layout = self.root.get_screen('main').ids.tasks_ongoing
+            tasks_layout2 = self.root.get_screen('main').ids.tasks
+            tasks_layout.remove_widget(self.widgets[key])
+            tasks_layout2.remove_widget(self.widgets[key])
 
         card = MD3Card(
             md_bg_color=prio,
@@ -355,8 +360,10 @@ class InventApp(MDApp):
         layout = MDRelativeLayout()
 
         titulo_widget = TwoLineListItem(
-            id=titulo,
-            pos_hint={"top": 1, "right": 1},
+            id=key,
+            _txt_left_pad = "0dp",
+            _txt_bot_pad = "10dp",
+            pos_hint={"top": 1.05, "right": 1},
             font_style="H5",
             text=titulo,
             secondary_text=f"Reponsável: {responsavel}!",
@@ -364,7 +371,8 @@ class InventApp(MDApp):
         layout.add_widget(titulo_widget)
 
         descricao_widget = MDLabel(
-            pos_hint={"middle": 1, "left": 20},
+            font_name = "Kumbh",
+            pos_hint={"top": 0.92, "left": 1},
             text=descricao,
             font_style="Subtitle1",
         )
@@ -391,8 +399,8 @@ class InventApp(MDApp):
             icon=ico,
             line_color=(0, 0, 0, 0),
             pos_hint={"bottom": 1, "left": 1},
-            id=titulo,
-            on_press=lambda *args: self.dialogo_confirmacao_tarefa(task_button, descricao_widget.text, priodidade_widget.text, resp_widget.text, status),
+            id=key,
+            on_press=lambda *args: self.dialogo_confirmacao_tarefa(task_button,titulo_widget.text, descricao_widget.text, priodidade_widget.text, resp_widget.text, status),
         )
         layout.add_widget(task_button)
 
@@ -401,9 +409,10 @@ class InventApp(MDApp):
             icon=icof,
             line_color=(0, 0, 0, 0),
             pos_hint={"bottom": 1, "right": 1},
-            id=titulo,
-            on_press=lambda *args: self.dialogo_finaliza_tarefa(task_button, descricao_widget.text, priodidade_widget.text, data_in, status_fim),
+            id=key,
+            on_press=lambda *args: self.dialogo_finaliza_tarefa(finish_button,titulo_widget.text, descricao_widget.text, priodidade_widget.text, data_in,resp_widget.text ,status_fim),
         )
+        tasks_layout = self.root.get_screen('main').ids.tasks
         if status == True:
             layout.add_widget(finish_button)
         if status == True:
@@ -413,7 +422,7 @@ class InventApp(MDApp):
     
         card.add_widget(layout)
         tasks_layout.add_widget(card)
-        self.widgets[titulo.upper()] = card
+        self.widgets[key] = card
         texto = "Tarefas atualizadas!"
         self.show_snackbar(texto)
          

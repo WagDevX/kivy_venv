@@ -1,5 +1,19 @@
 MDScreen:
     name: 'prices_add'
+    MDScrollView:
+        do_scroll_x:False
+        do_scroll_y:True
+        MDBoxLayout:
+            id:mybox
+            orientation: 'vertical'
+            size_hint_y: 0.45
+            pos_hint:{"center_y":0.15}
+            padding:20
+            spacing:20
+            Camera:
+                id:camera
+                #resolution:(640,480)
+                play:True
     FloatLayout:
         MDIconButton:
             icon: "arrow-collapse-left"
@@ -11,12 +25,12 @@ MDScreen:
         MDLabel:
             id: resp
             text: "Ninguém"
-            opacity: 0.0                     
+            opacity: 0.0               
         CampoDados:
             id: price_ean
             hint_text: "CÓDIGO EAN ou INTERNO"
             font_size: "18sp"
-            pos_hint: {'center_x': 0.5, 'center_y': 0.80}
+            pos_hint: {'center_x': 0.5, 'center_y': 0.60}
         CampoDados:
             id: price_qtd
             helper_text_mode: "persistent"
@@ -24,7 +38,7 @@ MDScreen:
             hint_text: "Padrão = 1"
             icon_right: "counter"
             font_size: "18sp"
-            pos_hint: {'center_x': 0.5, 'center_y': 0.70}
+            pos_hint: {'center_x': 0.5, 'center_y': 0.50}
         MDRectangleFlatIconButton:
             font_size: "25sp"
             line_color: 0, 0, 0, 0

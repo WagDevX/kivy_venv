@@ -69,6 +69,7 @@ class ScreenListItems(Screen):
                     "_txt_left_pad": "2dp",
                 }
             )'''
+    
     def lista_a_procura(self, text="", search=False):
         self.ids.rv.data = []
 

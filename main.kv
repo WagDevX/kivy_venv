@@ -75,10 +75,38 @@ MDScreen:
             icon: 'book-search'
 
             ScreenListItems
-            
-
         MDBottomNavigationItem:
             name: 'screen 3'
+            text: 'Preços'
+            icon: 'printer-check'
+            MDBoxLayout:
+                orientation: "vertical"
+                MDTopAppBar:
+                    elevation: 2
+                    title: "ITENS A PRECIFICAR"
+                MDScrollView:
+                    scroll_timeout : 100
+                
+                    MDList:
+                        id: md_list
+                        padding: 0
+                MDBoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    height: "0dp"
+                    padding: "12dp"
+                    pos_hint: {"center_x": 1.25, "center_y": .10}
+                    MDIconButton:
+                        icon: "plus-circle"
+                        icon_size: "40sp"
+                        on_press:
+                            root.manager.transition = SwapTransition()
+                            root.manager.current = "prices_add"
+                            app.screen_manager.transition = SlideTransition()
+                        
+
+        MDBottomNavigationItem:
+            name: 'screen 4'
             text: 'Perfil'
             icon: "account-box"
             MDBoxLayout:
@@ -175,9 +203,6 @@ MDScreen:
     text: "DUAS LINHAS COM AVATAR"
     secondary_text: "SEGUNDA LINHA AQUI"
 
-    ImageLeftWidget:
-        #source: root.source
-
 <CampoPesquisa@MDTextField>:
     mode: "fill"
     font_size: '20sp'
@@ -210,3 +235,15 @@ MDScreen:
     size_hint: 1, None
     style: "outlined" 
     radius: [10,10,10,10]
+
+<SwipeToDeleteItem>
+    on_swipe_complete: app.on_swipe_complete(root)
+    size_hint_y: None
+    height: content.height
+
+    MDCardSwipeFrontBox:
+        # Content of card.
+        OneLineListItem:
+            id: content
+            text: root.text
+            _no_ripple_effect: True

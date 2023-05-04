@@ -1,0 +1,38 @@
+MDScreen:
+    name: 'prices_add'
+    FloatLayout:
+        MDIconButton:
+            icon: "arrow-collapse-left"
+            pos_hint: {"center_y": .95}
+            user_font_size: "30sp"
+            on_press:
+                root.manager.transition.direction = "right"
+                root.manager.current = "main"
+        MDLabel:
+            id: resp
+            text: "Ninguém"
+            opacity: 0.0                     
+        CampoDados:
+            id: price_ean
+            hint_text: "CÓDIGO EAN ou INTERNO"
+            font_size: "18sp"
+            pos_hint: {'center_x': 0.5, 'center_y': 0.80}
+        CampoDados:
+            id: price_qtd
+            helper_text_mode: "persistent"
+            helper_text:"Digite a quantidade"
+            hint_text: "Padrão = 1"
+            icon_right: "counter"
+            font_size: "18sp"
+            pos_hint: {'center_x': 0.5, 'center_y': 0.70}
+        MDRectangleFlatIconButton:
+            font_size: "25sp"
+            line_color: 0, 0, 0, 0
+            text: "ADICIONAR"
+            icon: "plus-box-multiple-outline"
+            line_color: 0, 0, 0, 0
+            pos_hint: {"center_x": .5, "center_y": .20}
+            on_press:
+                app.add_prices(price_ean.text,price_qtd.text)
+
+                

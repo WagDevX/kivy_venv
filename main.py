@@ -23,9 +23,11 @@ import json
 from kivy.properties import StringProperty
 from kivy.core.text import LabelBase
 from kivy.clock import mainthread
-from random import sample, choice
+from kivymd.uix.card import MDCardSwipe
 
 
+class SwipeToDeleteItem(MDCardSwipe):
+    text = StringProperty()
 
 class userconfigscreen(Screen):
     pass
@@ -51,27 +53,22 @@ class Tab(MDFloatLayout, MDTabsBase):
     pass
 
 class ScreenListItems(Screen):
-    def on_kv_post(self, base_widget):
+    '''def on_kv_post(self, base_widget):
         # Carrega o arquivo JSON em um dicionário
         with open('seu_arquivo.json',encoding='utf-8') as f:
             data = json.load(f)
 
         # Loop através de cada item do dicionário
         for key, value in data.items():
-            sample_images = [
-                'wsol-favicon.png'
-            ]
-
             self.ids.rv.data.append(
                 {
-                    #viewclass": "ItemImage",
-                    #ImageLeftWidget": choice(sample_images),
-                    "source": './images/{}'.format(choice(sample_images)),
                     "text": str(key),
                     "secondary_text": str(value['descricao']),
                     "callback": lambda x: x,
+                    "secondary_font_style": "Caption",
+                    "_txt_left_pad": "2dp",
                 }
-            )
+            )'''
     def lista_a_procura(self, text="", search=False):
         self.ids.rv.data = []
 
@@ -87,6 +84,8 @@ class ScreenListItems(Screen):
                             "text": ean,
                             "secondary_text": produto['descricao'],
                             "callback": lambda x: x,
+                            "secondary_font_style": "Caption",
+                            "_txt_left_pad": "2dp",
                         }
                     )
             else:
@@ -96,11 +95,12 @@ class ScreenListItems(Screen):
                         "text": ean,
                         "secondary_text": produto['descricao'],
                         "callback": lambda x: x,
+
                     }
                 )
 
-class ListaItemsComImg(TwoLineAvatarIconListItem):
-    source =StringProperty()
+class ListaItemsComImg(TwoLineListItem):
+    pass
     
     
 class InventApp(MDApp):
@@ -129,6 +129,8 @@ class InventApp(MDApp):
         else:
             self.adicionar_tarefa(id,data["Titulo"],data["Descricao"],data["Prioridade"],data["Responsável"],data["Status"],data["Finalizada"], data["Data_in"], data["Data_fim"])
 
+    def on_swipe_complete(self, instance):
+        self.root.get_screen('main').ids.md_list.remove_widget(instance)
 
     def on_stop(self):
         self.my_stream.close()
@@ -142,6 +144,7 @@ class InventApp(MDApp):
         self.screen_manager.add_widget(Builder.load_file('main.kv'))
         self.tela_cadastro = (Builder.load_file('cadastro.kv')) 
         self.screen_manager.add_widget(Builder.load_file('tarefas.kv'))
+        self.screen_manager.add_widget(Builder.load_file('./prices/precificacao.kv'))
         self.screen_manager.add_widget(self.tela_cadastro)
         return self.screen_manager
 
@@ -215,7 +218,12 @@ class InventApp(MDApp):
             confirmation_dialog.open()
         else:
             return
-        
+
+    def add_prices(self, ean, qtd):
+        self.root.get_screen('main').ids.md_list.add_widget(
+            SwipeToDeleteItem(text=f"EAN: {ean} |  QTD:{qtd}")
+        )
+
     def on_start(self):
         self.my_stream = self.db.child("tasks").stream(self.stream_handler, self.user['idToken'])
         if not self.login_checked:

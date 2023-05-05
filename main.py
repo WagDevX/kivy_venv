@@ -1,7 +1,7 @@
 from kivy.lang import Builder
 from kivymd.uix.snackbar import MDSnackbar,MDSnackbarCloseButton
 from kivymd.app import MDApp
-from kivymd.uix.list import TwoLineAvatarIconListItem
+from kivymd.uix.list import TwoLineAvatarIconListItem,OneLineRightIconListItem,IconRightWidget
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
@@ -26,7 +26,8 @@ from kivy.clock import mainthread
 from kivymd.uix.card import MDCardSwipe
 from time import sleep
 from kivy_garden.zbarcam import ZBarCam
-    
+from prices import add_all_items_from_firebase, delete_item, add_prices
+
 
 class Telaprice(Screen):
     def on_kv_post(self, base_widget):
@@ -36,7 +37,7 @@ class Telaprice(Screen):
 
     def on_leave(self):
         self.ids.zbarcam.stop()
-        
+
 class Principal(Screen):
     pass
 class Tarefas(Screen):
@@ -127,6 +128,9 @@ class ListaItemsComImg(TwoLineListItem):
     
     
 class InventApp(MDApp):
+    delete_item = delete_item
+    add_prices = add_prices
+    add_all_items_from_firebase = add_all_items_from_firebase
     widgets = {}
     firebase = pyrebase.initialize_app(firebaseConfig)
     auth = firebase.auth()
@@ -138,6 +142,7 @@ class InventApp(MDApp):
     dialog2 = None
     dialog3 = None
     login_checked = False
+    
     @mainthread
     def stream_handler(self, message):
         print(message["event"]) 
@@ -152,8 +157,6 @@ class InventApp(MDApp):
         else:
             self.adicionar_tarefa(id,data["Titulo"],data["Descricao"],data["Prioridade"],data["Responsável"],data["Status"],data["Finalizada"], data["Data_in"], data["Data_fim"])
 
-    def on_swipe_complete(self, instance):
-        self.root.get_screen('main').ids.md_list.remove_widget(instance)
 
     def on_stop(self):
         self.my_stream.close()
@@ -249,12 +252,10 @@ class InventApp(MDApp):
         else:
             return
 
-    def add_prices(self, ean, qtd):
-        self.root.get_screen('main').ids.md_list.add_widget(
-            SwipeToDeleteItem(text=f"EAN: {ean} |  QTD:{qtd}")
-        )
+
 
     def on_start(self):
+        add_all_items_from_firebase(self)
         self.my_stream = self.db.child("tasks").stream(self.stream_handler, self.user['idToken'])
         if not self.login_checked:
             try:

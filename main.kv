@@ -103,6 +103,16 @@ Principal:
                             root.manager.transition = SwapTransition()
                             root.manager.current = "prices_add"
                             app.screen_manager.transition = SlideTransition()
+                MDBoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    height: "0dp"
+                    padding: "12dp"
+                    pos_hint: {"center_x": 1, "center_y": .10}
+                    MDIconButton:
+                        icon: "refresh-circle"
+                        icon_size: "40sp"
+                        on_press: app.add_all_items_from_firebase()
                         
 
         MDBottomNavigationItem:

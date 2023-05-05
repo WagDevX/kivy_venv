@@ -1,20 +1,31 @@
-MDScreen:
+#:import ZBarCam kivy_garden.zbarcam.ZBarCam
+#:import ZBarSymbol pyzbar.pyzbar.ZBarSymbol
+Telaprice:
     name: 'prices_add'
-    MDScrollView:
-        do_scroll_x:False
-        do_scroll_y:True
-        MDBoxLayout:
-            id:mybox
-            orientation: 'vertical'
-            size_hint_y: 0.45
-            pos_hint:{"center_y":0.15}
-            padding:20
-            spacing:20
-            Camera:
-                id:camera
-                #resolution:(640,480)
-                play:True
+    
+        
     FloatLayout:
+        MDScrollView:
+            do_scroll_x: False
+            do_scroll_y: False
+            MDBoxLayout:
+                id:mybox
+                orientation: 'vertical'
+                size_hint_y: 0.45
+                pos_hint:{"center_y": 1}
+                padding:80
+                spacing:60
+                ZBarCam:
+                    id:zbarcam
+                    code_types:ZBarSymbol.QRCODE.value,ZBarSymbol.EAN13.value
+                    on_symbols:app.on_symbols(*args)
+                    #canvas.before:
+                        #PushMatrix:
+                        #Rotate:
+                            #angle: 90
+                            #origin: self.center
+                    #canvas.after:
+                        #PopMatrix:
         MDIconButton:
             icon: "arrow-collapse-left"
             pos_hint: {"center_y": .95}
@@ -25,28 +36,41 @@ MDScreen:
         MDLabel:
             id: resp
             text: "Ninguém"
-            opacity: 0.0               
-        CampoDados:
-            id: price_ean
-            hint_text: "CÓDIGO EAN ou INTERNO"
-            font_size: "18sp"
-            pos_hint: {'center_x': 0.5, 'center_y': 0.60}
-        CampoDados:
-            id: price_qtd
-            helper_text_mode: "persistent"
-            helper_text:"Digite a quantidade"
-            hint_text: "Padrão = 1"
-            icon_right: "counter"
-            font_size: "18sp"
-            pos_hint: {'center_x': 0.5, 'center_y': 0.50}
-        MDRectangleFlatIconButton:
-            font_size: "25sp"
-            line_color: 0, 0, 0, 0
-            text: "ADICIONAR"
-            icon: "plus-box-multiple-outline"
-            line_color: 0, 0, 0, 0
-            pos_hint: {"center_x": .5, "center_y": .20}
-            on_press:
-                app.add_prices(price_ean.text,price_qtd.text)
+            opacity: 0.0
+        MD2Card:
+            MDRelativeLayout:               
+                CampoDados:
+                    padding: 40
+                    id: price_ean
+                    hint_text: "CÓDIGO EAN ou INTERNO"
+                    font_size: "18sp"
+                    pos_hint: {'top': 1, 'right': 0.9}
+                    
+                CampoDados:
+                    padding: 40
+                    id: price_qtd
+                    helper_text_mode: "persistent"
+                    helper_text:"Digite a quantidade"
+                    hint_text: "Padrão = 1"
+                    icon_right: "counter"
+                    font_size: "18sp"
+                    pos_hint: {'top': 0.8, 'right': 0.9}
+                MDRectangleFlatIconButton:
+                    padding: 40
+                    font_size: "25sp"
+                    line_color: 0, 0, 0, 0
+                    text: "ADICIONAR"
+                    icon: "plus-box-multiple-outline"
+                    line_color: 0, 0, 0, 0
+                    pos_hint: {'top': 0.65, 'center_x': 0.5}
+                    on_press:
+                        app.add_prices(price_ean.text,price_qtd.text)
+<MD2Card>
+    line_color: 0.1, 0.9, 0.9, 0.8
+    height: Window.height / 1.7
+    padding: "10dp", "10dp"
+    size_hint: 1, None 
+    radius: [0,0,0,0]
+
 
                 

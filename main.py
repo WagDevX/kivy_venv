@@ -24,8 +24,27 @@ from kivy.properties import StringProperty
 from kivy.core.text import LabelBase
 from kivy.clock import mainthread
 from kivymd.uix.card import MDCardSwipe
+from time import sleep
+from kivy_garden.zbarcam import ZBarCam
+    
 
+class Telaprice(Screen):
+    def on_kv_post(self, base_widget):
+        self.ids.zbarcam.stop()
+    def on_enter(self):
+        self.ids.zbarcam.start()
 
+    def on_leave(self):
+        self.ids.zbarcam.stop()
+        
+class Principal(Screen):
+    pass
+class Tarefas(Screen):
+    pass
+class Telalogin(Screen):
+    pass
+class Telacadastro(Screen):
+    pass
 class SwipeToDeleteItem(MDCardSwipe):
     text = StringProperty()
 
@@ -44,6 +63,9 @@ firebaseConfig = {
   }
 
 class MD3Card(MDCard):
+    text = StringProperty()
+
+class MD2Card(MDCard):
     text = StringProperty()
 
 class Content(BoxLayout):
@@ -135,6 +157,8 @@ class InventApp(MDApp):
 
     def on_stop(self):
         self.my_stream.close()
+    
+    
 
     def build(self):
         self.theme_cls.material_style = "M3"
@@ -148,7 +172,12 @@ class InventApp(MDApp):
         self.screen_manager.add_widget(Builder.load_file('./prices/precificacao.kv'))
         self.screen_manager.add_widget(self.tela_cadastro)
         return self.screen_manager
-
+    
+    def on_symbols(self,instance,symbols):
+        if not symbols == "":
+            for symbol in symbols:
+                self.root.get_screen('prices_add').ids.price_ean.text = symbol.data.decode()
+            
     def validate_task_fields(self):
         title = self.root.get_screen('tasks_send').ids.task_title.text.strip()
         description = self.root.get_screen('tasks_send').ids.task_description.text.strip()

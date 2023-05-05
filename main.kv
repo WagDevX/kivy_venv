@@ -1,6 +1,7 @@
 #:import SwapTransition kivy.uix.screenmanager.SwapTransition
 #:import SlideTransition kivy.uix.screenmanager.SlideTransition
-MDScreen:
+#:import Window kivy.core.window.Window
+Principal:
     name: "main"
 
     MDBottomNavigation:
@@ -86,7 +87,6 @@ MDScreen:
                     title: "ITENS A PRECIFICAR"
                 MDScrollView:
                     scroll_timeout : 100
-                
                     MDList:
                         id: md_list
                         padding: 0

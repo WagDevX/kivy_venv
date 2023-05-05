@@ -41,7 +41,7 @@ Builder.load_string('''
             background_color: .8811, .8811, .8811, 1
             foreground_color: 0, 0, 0, 1
             font_name: fnt_spnr.font_name
-            font_size: fntsz_spnr.text + 'sp'
+            font_size: sp(fntsz_spnr.text or 0)
             text: root.unicode_string
             size_hint: 1, None
             height: self.minimum_height
@@ -193,7 +193,7 @@ Tamil:          விரைவான பிரவுன் ஃபாக்ஸ�
 Telugu:         శీఘ్ర బ్రౌన్ ఫాక్స్ సోమరితనం పాత కుక్క కంటే హెచ్చుతగ్గుల.
 Thai:           สีน้ำตาลอย่างรวดเร็วจิ้งจอกกระโดดมากกว่าสุนัขเก่าที่ขี้เกียจ
 Turkish:        Hızlı kahverengi tilki tembel köpeğin üstünden atlar.
-Ukranian:       Швидкий коричневий лис перестрибує через лінивий старий пес.
+Ukrainian:       Швидкий коричневий лис перестрибує через лінивий старий пес.
 Urdu:           فوری بھوری لومڑی سست بوڑھے کتے پر کودتا.
 Vietnamese:     Các con cáo nâu nhanh chóng nhảy qua con chó lười biếng cũ.
 Welsh:          Mae'r cyflym frown llwynog neidio dros y ci hen ddiog.

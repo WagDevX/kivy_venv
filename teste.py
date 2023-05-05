@@ -1,25 +1,31 @@
-import csv
-import json
+from kivy.app import App
+from kivy.uix.screenmanager import Screen, ScreenManager
+from kivy.uix.button import Button
 
-csv_file = 'DADOS PRODUTOS.csv'
-json_file = 'seu_arquivo.json'
+class MainScreen(Screen):
+    def __init__(self, **kwargs):
+        super(MainScreen, self).__init__(**kwargs)
+        self.add_widget(Button(text="Ir para a tela secundária", on_press=self.switch_to_secondary))
 
-# Abre o arquivo CSV e cria um leitor CSV
-with open(csv_file, 'r', encoding='utf-8') as f:
-    reader = csv.reader(f)
+    def switch_to_secondary(self, *args):
+        self.manager.switch_to(SecondaryScreen())
 
-    # Cria um dicionário vazio
-    data = {}
+class SecondaryScreen(Screen):
+    def __init__(self, **kwargs):
+        super(SecondaryScreen, self).__init__(**kwargs)
+        self.add_widget(Button(text="Voltar para a tela principal", on_press=self.switch_to_main))
 
-    # Loop através de cada linha do CSV
-    for row in reader:
-        # Obtem a chave e a descrição a partir da linha
-        key = row[0]
-        descricao = row[1]
+    def switch_to_main(self, *args):
+        self.manager.switch_to(MainScreen())
 
-        # Adiciona a chave e a descrição ao dicionário como um novo item
-        data[key] = {'descricao': descricao}
+class MyScreenManager(ScreenManager):
+    pass
 
-# Salva o dicionário como JSON em um arquivo
-with open(json_file, 'w', encoding='utf-8') as f:
-    json.dump(data, f, ensure_ascii=False, indent=2)
+class MyApp(App):
+    def build(self):
+        sm = MyScreenManager()
+        sm.add_widget(MainScreen(name='main'))
+        sm.add_widget(SecondaryScreen(name='secondary'))
+        return sm
+
+MyApp().run()

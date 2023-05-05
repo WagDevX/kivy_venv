@@ -1,0 +1,3 @@
+[console_scripts]
+xcamera = kivy_garden.xcamera.main:main
+

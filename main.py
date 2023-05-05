@@ -1,7 +1,7 @@
 from kivy.lang import Builder
 from kivymd.uix.snackbar import MDSnackbar,MDSnackbarCloseButton
 from kivymd.app import MDApp
-from kivymd.uix.list import TwoLineAvatarIconListItem,OneLineRightIconListItem,IconRightWidget
+from kivymd.uix.list import TwoLineAvatarIconListItem,OneLineRightIconListItem,IconLeftWidget
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
@@ -26,7 +26,8 @@ from kivy.clock import mainthread
 from kivymd.uix.card import MDCardSwipe
 from time import sleep
 from kivy_garden.zbarcam import ZBarCam
-from prices import add_all_items_from_firebase, delete_item, add_prices
+from tarefas import show_snackbar
+
 
 
 class Telaprice(Screen):
@@ -126,11 +127,12 @@ class ScreenListItems(Screen):
 class ListaItemsComImg(TwoLineListItem):
     pass
     
-    
+class CustomButton(IconLeftWidget):
+    def __init__(self, **kwargs):
+        self.ean = kwargs.pop('ean')
+        super().__init__(**kwargs)
+
 class InventApp(MDApp):
-    delete_item = delete_item
-    add_prices = add_prices
-    add_all_items_from_firebase = add_all_items_from_firebase
     widgets = {}
     firebase = pyrebase.initialize_app(firebaseConfig)
     auth = firebase.auth()
@@ -142,7 +144,7 @@ class InventApp(MDApp):
     dialog2 = None
     dialog3 = None
     login_checked = False
-    
+
     @mainthread
     def stream_handler(self, message):
         print(message["event"]) 
@@ -255,7 +257,7 @@ class InventApp(MDApp):
 
 
     def on_start(self):
-        add_all_items_from_firebase(self)
+        self.add_all_items_from_firebase()
         self.my_stream = self.db.child("tasks").stream(self.stream_handler, self.user['idToken'])
         if not self.login_checked:
             try:
@@ -464,7 +466,80 @@ class InventApp(MDApp):
         self.widgets[key] = card
         texto = "Tarefas atualizadas!"
         self.show_snackbar(texto)
-         
+
+    def add_prices(self, ean, qtd):
+        try:
+            if qtd == "":
+                qtd = 1
+            else:
+                qtd = int(qtd)
+            user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
+
+            # Verifica se o EAN já existe no Firebase
+            ean_data = self.db.child("precos").child(ean).get(user['idToken']).val()
+
+            if ean_data:
+                # Atualiza a quantidade do EAN caso já exista
+                ean_qtd = ean_data.get('Quantidade', 0)
+                nova_qtd = ean_qtd + qtd
+                data = {"Quantidade": nova_qtd}
+                self.db.child("precos").child(ean).update(data, user['idToken'])
+            else:
+                # Cria um novo item caso o EAN não exista
+                data = {"Quantidade": qtd}
+                self.db.child("precos").child(ean).set(data, user['idToken'])
+
+            # Atualiza o widget do item correspondente
+            for item in self.root.get_screen('main').ids.md_list.children:
+                if isinstance(item, TwoLineAvatarIconListItem) and getattr(item, 'ean', None) == ean:
+                    item.text = ean
+                    item.secondary_text = f"QTD: {nova_qtd}" if ean_data else f"QTD: {qtd}"
+                    break
+            else:
+                # Cria um novo widget para o item adicionado
+                item = TwoLineAvatarIconListItem(
+                    CustomButton(
+                        icon="delete-circle-outline",
+                        ean=ean,
+                        on_press=self.delete_item
+                    ),
+                    text=ean,
+                    secondary_text = f"QTD: {qtd}"
+                )
+                self.root.get_screen('main').ids.md_list.add_widget(item)
+                item.ean = ean    
+                show_snackbar("Adicionado com sucesso")
+        except Exception:
+            show_snackbar("Erro ao adicionar")
+    def add_all_items_from_firebase(self):
+        try:
+            for item in list(self.root.get_screen('main').ids.md_list.children):
+                self.root.get_screen('main').ids.md_list.remove_widget(item)
+            user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
+            all_items = self.db.child("precos").get(user['idToken'])
+            for ean, data in all_items.val().items():
+                qtd = data.get("Quantidade")
+                item = TwoLineAvatarIconListItem(
+                    CustomButton(
+                        icon="delete-circle-outline",
+                        ean=ean,
+                        on_press=self.delete_item
+                    ),
+                    text=ean,
+                    secondary_text = f"QTD: {qtd}"
+                )
+                self.root.get_screen('main').ids.md_list.add_widget(item)
+                item.ean = ean    
+        except Exception:
+            pass
+
+    def delete_item(self, button):
+        ean = button.ean
+        user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
+        self.db.child("precos").child(ean).remove(user['idToken'])
+        parent_item = button.parent.parent
+        parent_item.parent.remove_widget(parent_item)
+
     LabelBase.register(name='Kumbh',
                         fn_regular='KumbhSans.ttf')
 InventApp().run()

@@ -33,7 +33,7 @@ def add_prices(self, ean, qtd):
                 IconRightWidget(
                     id=f"item_{ean}",
                     icon="delete-circle-outline",
-                    on_press=lambda widget: self.delete_item(ean, item)
+                    on_press=lambda widget: self.delete_item(ean, item.ean)
                 ),
                 text=f"EAN: {ean}     QTD: {qtd}"
             )
@@ -55,14 +55,14 @@ def add_all_items_from_firebase(self):
                 IconRightWidget(
                     id=f"item_{ean}",
                     icon="delete-circle-outline",
-                    on_press=lambda widget: self.delete_item(ean, item)
+                    on_press=lambda widget: self.delete_item(ean, item.ean)
                 ),
                 text=f"EAN {ean}     QTD: {qtd}"
             )
             self.root.get_screen('main').ids.md_list.add_widget(item)
             item.ean = ean    
     except Exception:
-            pass
+        pass
         
 def delete_item(self, ean, item):
     try:

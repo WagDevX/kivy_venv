@@ -25,7 +25,8 @@ def add_abastecimento_firebase(self):
                     on_press=self.delete_item_abastecimento
                 ),
                 text=ean,
-                secondary_text = f"[ {qtd} ] - {desc}"
+                secondary_text = f"[ {qtd} ] - {desc}",
+                secondary_font_style = "Caption"
             )
             self.root.get_screen('main').ids.lista_abastecimento.add_widget(item)
             item.ean = ean    
@@ -71,7 +72,8 @@ def abastecimento(self, ean, qtd, desc):
                     on_press=self.delete_item_abastecimento
                 ),
                 text=ean,
-                secondary_text = f"[ {qtd} ] - {desc}"
+                secondary_text = f"[ {qtd} ] - {desc}",
+                secondary_font_style = "Caption"
             )
             self.root.get_screen('main').ids.lista_abastecimento.add_widget(item)
             item.ean = ean    

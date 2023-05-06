@@ -27,6 +27,7 @@ from kivymd.uix.card import MDCardSwipe
 from time import sleep
 from kivy_garden.zbarcam import ZBarCam
 from tarefas import show_snackbar
+from prices import abastecimento, add_abastecimento_firebase
 
 
 
@@ -108,7 +109,7 @@ class ScreenListItems(Screen):
                             "source": 'wsol_icon.png',
                             "text": ean,
                             "secondary_text": produto['descricao'],
-                            "callback": lambda x: x,
+                            #"callback": lambda x: x,
                             "secondary_font_style": "Caption",
                             "_txt_left_pad": "2dp",
                         }
@@ -133,6 +134,7 @@ class CustomButton(IconLeftWidget):
         super().__init__(**kwargs)
 
 class InventApp(MDApp):
+    add_abastecimento_firebase = add_abastecimento_firebase
     widgets = {}
     firebase = pyrebase.initialize_app(firebaseConfig)
     auth = firebase.auth()
@@ -231,6 +233,28 @@ class InventApp(MDApp):
         else:
             return
         
+    def dialogo_adiciona_item_da_lista(self, ean, qtd, desc):
+        confirmation_dialog = MDDialog(
+                title="ADICIONAR",
+                text="Deseja adicionar o produto onde?",
+                buttons=[
+                    MDFlatButton(
+                        text="PREÇOS", 
+                        on_release=lambda *args: self.add_prices(ean, qtd)
+                    ),
+                    MDFlatButton(
+                        text="ABASTECIMENTO", 
+                        #on_press=lambda *args: finaliza_tarefas_firebase(widget.id, title, desc, prio, self.usuario_logado, data_in), 
+                        on_release=lambda *args: abastecimento(self,ean, qtd, desc)
+                    ),
+                    MDFlatButton(
+                        text="CANCELAR", 
+                        on_release=lambda *args: confirmation_dialog.dismiss()
+                    ),
+                ],
+            )
+        confirmation_dialog.open()
+
     def dialogo_finaliza_tarefa(self,widget, title, desc, prio, data_in, resp,  status=False):
         if resp != self.usuario_logado:
             return
@@ -257,6 +281,7 @@ class InventApp(MDApp):
 
 
     def on_start(self):
+        add_abastecimento_firebase(self)
         self.add_all_items_from_firebase()
         self.my_stream = self.db.child("tasks").stream(self.stream_handler, self.user['idToken'])
         if not self.login_checked:
@@ -382,13 +407,13 @@ class InventApp(MDApp):
 
         if '1' in prioridade:
             pri = '1'
-            prio = "#f4dedc"
+            prio = "#abbdf2"
         elif '2' in prioridade:
             pri = '2'
-            prio = "#f6eeee"
+            prio = "#d5def8"
         elif '3' in prioridade:
             pri = '3'
-            prio = "#f8f5f4"
+            prio = "#eaeefb"
         if key in self.widgets:
             tasks_layout = self.root.get_screen('main').ids.tasks_ongoing
             tasks_layout2 = self.root.get_screen('main').ids.tasks
@@ -511,6 +536,7 @@ class InventApp(MDApp):
                 show_snackbar("Adicionado com sucesso")
         except Exception:
             show_snackbar("Erro ao adicionar")
+    
     def add_all_items_from_firebase(self):
         try:
             for item in list(self.root.get_screen('main').ids.md_list.children):
@@ -539,6 +565,14 @@ class InventApp(MDApp):
         self.db.child("precos").child(ean).remove(user['idToken'])
         parent_item = button.parent.parent
         parent_item.parent.remove_widget(parent_item)
+    
+    def delete_item_abastecimento(self, button):
+        ean = button.ean
+        user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
+        self.db.child("abastecimento").child(ean).remove(user['idToken'])
+        parent_item = button.parent.parent
+        parent_item.parent.remove_widget(parent_item)
+
 
     LabelBase.register(name='Kumbh',
                         fn_regular='KumbhSans.ttf')

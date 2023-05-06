@@ -42,12 +42,16 @@ class Telaprice(Screen):
 
 class Principal(Screen):
     pass
+
 class Tarefas(Screen):
     pass
+
 class Telalogin(Screen):
     pass
+
 class Telacadastro(Screen):
     pass
+
 class SwipeToDeleteItem(MDCardSwipe):
     text = StringProperty()
 
@@ -149,24 +153,25 @@ class InventApp(MDApp):
 
     @mainthread
     def stream_handler(self, message):
-        print(message["event"]) 
-        caminho = message["path"]
-        id = caminho.lstrip("/") 
-        data = message["data"]
-        if caminho == "/":
-            for k, i in data.items():
-                print(k)
-                print(i)
-                self.adicionar_tarefa(k,i["Titulo"],i["Descricao"],i["Prioridade"],i["Responsável"],i["Status"],i["Finalizada"], i["Data_in"], i["Data_fim"])
-        else:
-            self.adicionar_tarefa(id,data["Titulo"],data["Descricao"],data["Prioridade"],data["Responsável"],data["Status"],data["Finalizada"], data["Data_in"], data["Data_fim"])
-
+        try:
+            print(message["event"]) 
+            caminho = message["path"]
+            id = caminho.lstrip("/") 
+            data = message["data"]
+            if caminho == "/":
+                for k, i in data.items():
+                    self.adicionar_tarefa(k,i["Titulo"],i["Descricao"],i["Prioridade"],i["Responsável"],i["Status"],i["Finalizada"], i["Data_in"], i["Data_fim"])
+            else:
+                self.adicionar_tarefa(id,data["Titulo"],data["Descricao"],data["Prioridade"],data["Responsável"],data["Status"],data["Finalizada"], data["Data_in"], data["Data_fim"])
+                texto = "Tarefas atualizadas!"
+                self.show_snackbar(texto)
+        except Exception:
+            texto = "Erro de conexão!"
+            self.show_snackbar(texto)
 
     def on_stop(self):
         self.my_stream.close()
     
-    
-
     def build(self):
         self.theme_cls.material_style = "M3"
         self.theme_cls.primary_palette = "Blue"
@@ -202,6 +207,30 @@ class InventApp(MDApp):
 
         # Caso todos os campos estejam preenchidos corretamente, envia a tarefa para o Firebase
         envia_tarefas_firebase(title, description, priority)
+
+    def verifica_campos_cadastro(self):
+        # obtém, os valores dos campos de entrada
+        nome = self.root.get_screen('cadastro').ids.name.text
+        nascimento = self.root.get_screen('cadastro').ids.birth.text
+        celular = self.root.get_screen('cadastro').ids.pnum.text
+        email = self.root.get_screen('cadastro').ids.mail.text
+        usuario = self.root.get_screen('cadastro').ids.user.text
+        senha = self.root.get_screen('cadastro').ids.password.text
+        confirmar_senha = self.root.get_screen('cadastro').ids.password_confirm.text
+
+        # verificar se todos os campos estão preenchidos
+        if nome == '' or nascimento == '' or celular == '' or email == '' or usuario == '' or senha == '' or confirmar_senha == '':
+            self.show_error_dialog('Todos os campos são obrigatórios!')
+            return
+
+        # verificar se as senhas coincidem
+        if senha != confirmar_senha:
+            self.show_error_dialog('As senhas digitadas não coincidem!')
+            return
+
+        # se todos os campos estiverem preenchidos e as senhas coincidirem, enviar dados ao Firebase
+        if self.envia_dados_firebase(nome, email, celular, senha, usuario, nascimento):
+            self.show_snackbar('Cadastrado com sucesso!')
 
     def show_error_dialog(self, message):
         dialog = MDDialog(
@@ -272,8 +301,6 @@ class InventApp(MDApp):
             confirmation_dialog.open()
         else:
             return
-
-
 
     def on_start(self):
         add_abastecimento_firebase(self)
@@ -386,7 +413,6 @@ class InventApp(MDApp):
         date_dialog.open()  
 
     def adicionar_tarefa(self,key, titulo, descricao, prioridade, responsavel, status, status_fim, data_in, data_fin):
-        
         if status == True:
             ico = "clock-check"
             botao = f"{data_in}"
@@ -484,8 +510,6 @@ class InventApp(MDApp):
         card.add_widget(layout)
         tasks_layout.add_widget(card)
         self.widgets[key] = card
-        texto = "Tarefas atualizadas!"
-        self.show_snackbar(texto)
 
     def add_prices(self, ean, qtd):
         try:
@@ -569,7 +593,6 @@ class InventApp(MDApp):
         self.db.child("abastecimento").child(ean).remove(user['idToken'])
         parent_item = button.parent.parent
         parent_item.parent.remove_widget(parent_item)
-
 
     LabelBase.register(name='Kumbh',
                         fn_regular='KumbhSans.ttf')

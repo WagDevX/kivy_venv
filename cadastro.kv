@@ -1,6 +1,5 @@
 Telacadastro:
-    name: "cadastro"
-           
+    name: "cadastro"       
     FloatLayout:
         MDIconButton:
             icon: "arrow-collapse-left"
@@ -8,8 +7,7 @@ Telacadastro:
             user_font_size: "30sp"
             on_press:
                 root.manager.transition.direction = "right"
-                root.manager.current = "login"
-         
+                root.manager.current = "login"        
         CampoDados:
             id: name
             hint_text: "nome completo"
@@ -50,22 +48,19 @@ Telacadastro:
             icon_right: "eye-off"
             font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.33}
-            
-
+            password: True
         CampoDados:
             id: password_confirm
             hint_text: "coonfirme sua senha"
             icon_right: "eye-off"
             font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.23}
-
+            password: True
         MDFillRoundFlatButton:
             text: "CADASTRAR"
             font_size: "25sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.13}
-            on_press: 
-                if app.envia_dados_firebase(name.text, mail.text, pnum.text, password.text, user.text, birth.text): app.show_snackbar("Cadastrado com Sucesso!")
-
+            on_press: app.verifica_campos_cadastro()
         Widget:
             size_hint_y: None
             height: 10

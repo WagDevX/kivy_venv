@@ -63,7 +63,7 @@ def inicia_tarefas_firebase(key,title,desc, prio, resp):
             texto = "Erro ao iniciar tarefa!"
             show_snackbar(texto)
         else:
-            texto = "iniciado com sucesso!"
+            texto = "Iniciado com sucesso!"
             show_snackbar(texto)
             return True
         
@@ -106,10 +106,10 @@ def finaliza_tarefas_firebase(key,title,desc, prio, resp, data_in):
                     }
             db.child("tasks").child(key).set(data, user['idToken'])
         except Exception:
-            texto = "Erro ao iniciar tarefa!"
+            texto = "Erro ao finalizar tarefa!"
             show_snackbar(texto)
         else:
-            texto = "iniciado com sucesso!"
+            texto = "Finalizado com sucesso!"
             show_snackbar(texto)
             return True            
                    

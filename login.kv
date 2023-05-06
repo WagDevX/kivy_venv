@@ -1,9 +1,6 @@
-#:import Snackbar kivymd.uix.snackbar.Snackbar
 Telalogin:
-    name: "login"
-                     
+    name: "login"                
     FloatLayout:
-
         Image:
             source: "logo-no-background.png"
             pos_hint: {'center_x': 0.5, 'center_y': 0.76}
@@ -18,7 +15,6 @@ Telalogin:
             size_hint_x: "0.8"
             font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.63}
-
         MDTextField:
             id: passw
             hint_text: "senha"
@@ -27,8 +23,6 @@ Telalogin:
             font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.53}
             password: True
-
-
         MDFillRoundFlatButton:
             text: "LOG IN"
             size_hint_x:"0.8"

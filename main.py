@@ -244,12 +244,7 @@ class InventApp(MDApp):
                     ),
                     MDFlatButton(
                         text="ABASTECIMENTO", 
-                        #on_press=lambda *args: finaliza_tarefas_firebase(widget.id, title, desc, prio, self.usuario_logado, data_in), 
                         on_release=lambda *args: abastecimento(self,ean, qtd, desc)
-                    ),
-                    MDFlatButton(
-                        text="CANCELAR", 
-                        on_release=lambda *args: confirmation_dialog.dismiss()
                     ),
                 ],
             )
@@ -529,7 +524,8 @@ class InventApp(MDApp):
                         on_press=self.delete_item
                     ),
                     text=ean,
-                    secondary_text = f"QTD: {qtd}"
+                    secondary_text = f"QTD: {qtd}",
+                    font_style = "H5"
                 )
                 self.root.get_screen('main').ids.md_list.add_widget(item)
                 item.ean = ean    
@@ -552,7 +548,8 @@ class InventApp(MDApp):
                         on_press=self.delete_item
                     ),
                     text=ean,
-                    secondary_text = f"QTD: {qtd}"
+                    secondary_text = f"QTD: {qtd}",
+                    font_style = "H5"
                 )
                 self.root.get_screen('main').ids.md_list.add_widget(item)
                 item.ean = ean    

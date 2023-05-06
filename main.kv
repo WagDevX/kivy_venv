@@ -201,13 +201,9 @@ Principal:
                                 pos_hint: {'center_x': .5, 'center_y': .5}
                                 icon_active: "check"
                                 icon_active_color: "white"
-            
-
-
 <ScreenListItems>:
     name: "list_items"
     FloatLayout:
-        
         CampoPesquisa:
             id: pesquisa 
             hint_text: 'Digite o que procura'
@@ -215,7 +211,6 @@ Principal:
             pos_hint: {'center_x': 0.5, 'center_y': 0.9}
             size_hint: .8, .11
             on_text: root.lista_a_procura(self.text, True)
-
         RecycleView:
             id: rv
             viewclass: 'ListaItemsComImg'
@@ -228,7 +223,6 @@ Principal:
                 size_hint_y: None
                 height: self.minimum_height
                 orientation: 'vertical'
-
 <ListaItemsComImg>:
     text: "DUAS LINHAS COM AVATAR"
     secondary_text: "SEGUNDA LINHA AQUI"
@@ -266,7 +260,6 @@ Principal:
     size_hint: 1, None
     style: "outlined" 
     radius: [10,10,10,10]
-
 <SwipeToDeleteItem>
     on_swipe_complete: app.on_swipe_complete(root)
     size_hint_y: None

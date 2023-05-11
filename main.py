@@ -28,17 +28,31 @@ from time import sleep
 from kivy_garden.zbarcam import ZBarCam
 from tarefas import show_snackbar
 from prices import abastecimento, add_abastecimento_firebase
+from kivy.utils import platform
+import os
+from barcode.writer import ImageWriter
+import barcode
+from kivy.uix.image import Image
+from kivy.uix.gridlayout import GridLayout
+from kivy.utils import get_color_from_hex
+from kivy.animation import Animation
+
+
+
 
 
 
 class Telaprice(Screen):
     def on_kv_post(self, base_widget):
         self.ids.zbarcam.stop()
+
     def on_enter(self):
+        #self.ids.zbarcam.ids['xcamera']._camera.start()
         self.ids.zbarcam.start()
 
     def on_leave(self):
         self.ids.zbarcam.stop()
+        #self.ids.zbarcam.ids['xcamera']._camera.stop()
 
 class Principal(Screen):
     pass
@@ -70,6 +84,9 @@ firebaseConfig = {
   }
 
 class MD3Card(MDCard):
+    text = StringProperty()
+
+class MD4Card(MDCard):
     text = StringProperty()
 
 class MD2Card(MDCard):
@@ -138,8 +155,10 @@ class CustomButton(IconLeftWidget):
         super().__init__(**kwargs)
 
 class InventApp(MDApp):
+    overlay_color = get_color_from_hex("#6042e4")
     add_abastecimento_firebase = add_abastecimento_firebase
     widgets = {}
+    widgets_precos = {}
     firebase = pyrebase.initialize_app(firebaseConfig)
     auth = firebase.auth()
     db = firebase.database()
@@ -181,8 +200,9 @@ class InventApp(MDApp):
         self.screen_manager.add_widget(Builder.load_file('main.kv'))
         self.tela_cadastro = (Builder.load_file('cadastro.kv')) 
         self.screen_manager.add_widget(Builder.load_file('tarefas.kv'))
-        self.screen_manager.add_widget(Builder.load_file('./prices/precificacao.kv'))
+        self.tela_prices = (Builder.load_file('./prices/precificacao.kv'))
         self.screen_manager.add_widget(self.tela_cadastro)
+        self.screen_manager.add_widget(self.tela_prices)
         return self.screen_manager
     
     def on_symbols(self,instance,symbols):
@@ -303,6 +323,9 @@ class InventApp(MDApp):
             return
 
     def on_start(self):
+        if platform =='android':
+            from android.permissions import request_permissions, Permission
+            request_permissions([Permission.WRITE_EXTERNAL_STORAGE,Permission.CAMERA])
         add_abastecimento_firebase(self)
         self.add_all_items_from_firebase()
         self.my_stream = self.db.child("tasks").stream(self.stream_handler, self.user['idToken'])
@@ -512,51 +535,63 @@ class InventApp(MDApp):
         self.widgets[key] = card
 
     def add_prices(self, ean, qtd):
-        try:
             if qtd == "":
                 qtd = 1
             else:
                 qtd = int(qtd)
             user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
 
-            # Verifica se o EAN já existe no Firebase
             ean_data = self.db.child("precos").child(ean).get(user['idToken']).val()
 
             if ean_data:
-                # Atualiza a quantidade do EAN caso já exista
                 ean_qtd = ean_data.get('Quantidade', 0)
                 nova_qtd = ean_qtd + qtd
                 data = {"Quantidade": nova_qtd}
                 self.db.child("precos").child(ean).update(data, user['idToken'])
             else:
-                # Cria um novo item caso o EAN não exista
                 data = {"Quantidade": qtd}
                 self.db.child("precos").child(ean).set(data, user['idToken'])
 
-            # Atualiza o widget do item correspondente
-            for item in self.root.get_screen('main').ids.md_list.children:
-                if isinstance(item, TwoLineAvatarIconListItem) and getattr(item, 'ean', None) == ean:
-                    item.text = ean
-                    item.secondary_text = f"QTD: {nova_qtd}" if ean_data else f"QTD: {qtd}"
-                    break
+            items = self.root.get_screen('main').ids.md_list.children
+            if ean in self.widgets_precos:
+                print('widget já criado')
+                for item in items:
+                    if isinstance(item, TwoLineAvatarIconListItem):
+                        print('widget achado')
+                        ean_data = self.db.child("precos").child(ean).get(user['idToken']).val()
+                        nova_qtd = ean_data.get('Quantidade', 0)
+                        item.secondary_text = f"QTD: {nova_qtd}"
             else:
-                # Cria um novo widget para o item adicionado
+                eani = str(ean)
+                ean13 = barcode.get_barcode_class('ean13')
+                barcode_image = ean13(eani, writer=ImageWriter())
+                barcode_image.save(filename=os.path.join(os.getcwd(), "precos", ean))
+                card = MD4Card(
+                    md_bg_color="FFFFFF",
+                    id=ean
+                )
+                layout = GridLayout(cols=1)
                 item = TwoLineAvatarIconListItem(
                     CustomButton(
                         icon="delete-circle-outline",
-                        ean=ean,
-                        on_press=self.delete_item
+                        on_press=self.delete_item,
+                        ean=ean
                     ),
+                    id=ean,
                     text=ean,
                     secondary_text = f"QTD: {qtd}",
                     font_style = "H5"
                 )
-                self.root.get_screen('main').ids.md_list.add_widget(item)
-                item.ean = ean    
+                layout.add_widget(item)
+                ean_layout = Image(source=f'precos/{ean}.png', allow_stretch=True)
+                layout.add_widget(ean_layout)
+
+                card.add_widget(layout)
+                self.root.get_screen('main').ids.md_list.add_widget(card)
+                item.ean = ean
                 show_snackbar("Adicionado com sucesso")
-        except Exception:
-            show_snackbar("Erro ao adicionar")
-    
+                self.widgets_precos[ean] = card
+
     def add_all_items_from_firebase(self):
         try:
             for item in list(self.root.get_screen('main').ids.md_list.children):
@@ -565,34 +600,105 @@ class InventApp(MDApp):
             all_items = self.db.child("precos").get(user['idToken'])
             for ean, data in all_items.val().items():
                 qtd = data.get("Quantidade")
+
+                ean13 = barcode.get_barcode_class('ean13')
+                barcode_image = ean13(ean, writer=ImageWriter())
+                barcode_image.save(filename=os.path.join(os.getcwd(), "precos", ean))
+
+                card = MD4Card(
+                md_bg_color="FFFFFF",
+                id=ean
+                )
+                layout = GridLayout(cols=1)
                 item = TwoLineAvatarIconListItem(
                     CustomButton(
                         icon="delete-circle-outline",
+                        id=ean,
                         ean=ean,
                         on_press=self.delete_item
                     ),
+                    id=ean,
                     text=ean,
                     secondary_text = f"QTD: {qtd}",
-                    font_style = "H5"
+                    font_style = "H5",
+                    _no_ripple_effect = True
                 )
-                self.root.get_screen('main').ids.md_list.add_widget(item)
-                item.ean = ean    
+                layout.add_widget(item)
+                ean_layout = Image(source=f'precos/{ean}.png', allow_stretch=True)
+                layout.add_widget(ean_layout)
+                card.add_widget(layout)
+                self.root.get_screen('main').ids.md_list.add_widget(card)
+                item.ean = ean
+                self.widgets_precos[ean] = card
         except Exception:
             pass
 
     def delete_item(self, button):
         ean = button.ean
+        print(button.ean)
         user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
         self.db.child("precos").child(ean).remove(user['idToken'])
-        parent_item = button.parent.parent
+        parent_item = button.parent.parent.parent.parent
         parent_item.parent.remove_widget(parent_item)
-    
+
+    def delete_item_2(self, ean):
+        user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
+        self.db.child("precos").child(ean).remove(user['idToken'])
+        file_path = os.path.join(os.getcwd(), "precos", ean  + '.png')
+        os.remove(file_path)
+
     def delete_item_abastecimento(self, button):
         ean = button.ean
         user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
         self.db.child("abastecimento").child(ean).remove(user['idToken'])
         parent_item = button.parent.parent
         parent_item.parent.remove_widget(parent_item)
+
+    def delete_selected_item(self, instance):
+        selection_list = self.root.get_screen('main').ids.md_list
+        selected_items = selection_list.get_selected_list_items()
+
+        for item in selected_items:
+            selection_list.remove_widget(item)
+            ean = item.children[1].id
+            self.delete_item_2(ean)
+        self.root.get_screen('main').ids.md_list.unselected_all()
+
+    def set_selection_mode(self, instance_selection_list, mode):
+        if mode:
+            md_bg_color = self.overlay_color
+            left_action_items = [
+                [
+                    "close",
+                    lambda x : self.root.get_screen('main').ids.md_list.unselected_all(),
+                ]
+            ]
+            right_action_items = [["trash-can", lambda x: self.delete_selected_item(x)], ["dots-vertical"]]
+        else:
+            md_bg_color = (0, 0, 0, 1)
+            left_action_items = [["menu"]]
+            right_action_items = ["dots-vertical"]
+            self.root.get_screen('main').ids.toolbar.title = "Itens a precificar"
+
+        Animation(md_bg_color=md_bg_color, d=0.2).start(self.root.get_screen('main').ids.toolbar)
+        self.root.get_screen('main').ids.toolbar.left_action_items = left_action_items
+        self.root.get_screen('main').ids.toolbar.right_action_items = right_action_items
+
+    def on_selected(self, instance_selection_list, instance_selection_item):
+        selected_items = instance_selection_list.get_selected_list_items()
+        print(instance_selection_item.id)
+        for item in selected_items:
+            ean = item.children[1].id
+            print(ean[-1])
+        self.root.get_screen('main').ids.toolbar.title = str(
+            len(instance_selection_list.get_selected_list_items())
+        )
+
+    def on_unselected(self, instance_selection_list, instance_selection_item):
+        if instance_selection_list.get_selected_list_items():
+            self.root.get_screen('main').ids.toolbar.title = str(
+                len(instance_selection_list.get_selected_list_items())
+            )
 
     LabelBase.register(name='Kumbh',
                         fn_regular='KumbhSans.ttf')

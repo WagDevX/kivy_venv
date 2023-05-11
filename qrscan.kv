@@ -1,0 +1,68 @@
+#:import Window kivy.core.window.Window
+
+<ScanScreen>:
+    name: 'scan'
+    MDBoxLayout:
+        orientation: 'vertical'
+        
+    #BoxLayout:
+		#orientation: 'vertical'
+    ScanAnalyze:
+        id:preview
+        aspect_ratio: '16:9'
+        extracted_data:root.got_result
+        #orientation: 'landscape'
+        #sensor_resolution: 400,300 
+    MDRelativeLayout:
+        MDCard:
+            height: Window.height / 2
+            size_hint_y: 0.1
+            pos_hint: {"top": 1}
+            radius: [0,0,0,0]
+            MDIconButton:
+                icon: "arrow-collapse-left"
+                pos_hint: {"top": 1, "left": 1}
+                user_font_size: "30sp"
+                on_press:
+                    root.manager.transition.direction = "right"
+                    root.manager.current = "main"#
+
+    MDLabel:	
+        size_hint_y: None
+        height:'130dp'
+        id:ti
+    MD2Card:
+        height: Window.height / 2
+        size_hint_y: 0.5
+        MDRelativeLayout:               
+            CampoDados:
+                padding: 40
+                id: price_ean
+                hint_text: "CÓDIGO EAN ou INTERNO"
+                font_size: "18sp"
+                pos_hint: {'top': 1, 'right': 0.9}
+                
+            CampoDados:
+                padding: 40
+                id: price_qtd
+                helper_text_mode: "persistent"
+                helper_text:"Digite a quantidade"
+                hint_text: "Padrão = 1"
+                icon_right: "counter"
+                font_size: "18sp"
+                pos_hint: {'top': 0.8, 'right': 0.9}
+            MDRectangleFlatIconButton:
+                padding: 40
+                font_size: "25sp"
+                line_color: 0, 0, 0, 0
+                text: "ADICIONAR"
+                icon: "plus-box-multiple-outline"
+                line_color: 0, 0, 0, 0
+                pos_hint: {'top': 0.65, 'center_x': 0.5}
+                #on_press:
+                    #app.add_prices(price_ean.text,price_qtd.text)
+
+<CampoDados@MDTextField>:
+    size_hint_x: "0.8"
+    font_size: "18sp"
+

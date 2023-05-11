@@ -88,11 +88,24 @@ Principal:
                     Tab:
                         title: "PRECIFICAÇÃO"
                         icon: "printer-check"
-                        MDScrollView:
-                            scroll_timeout : 100
-                            MDList:
-                                id: md_list
-                                padding: 0
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            MDTopAppBar:
+                                id: toolbar
+                                title: "Itens a precificar"
+                                left_action_items: [["menu"]]
+                                right_action_items: [["dots-vertical"]]
+                                md_bg_color: 0, 0, 0, 1
+                            ScrollView:
+                                #scroll_timeout : 100
+                                MDSelectionList:
+                                    id: md_list
+                                    spacing: "12dp"
+                                    overlay_color: app.overlay_color[:-1] + [.2]
+                                    icon_bg_color: app.overlay_color
+                                    on_selected: app.on_selected(*args)
+                                    on_unselected: app.on_unselected(*args)
+                                    on_selected_mode: app.set_selection_mode(*args)
                         MDBoxLayout:
                             orientation: "vertical"
                             size_hint_y: None
@@ -260,6 +273,7 @@ Principal:
     size_hint: 1, None
     style: "outlined" 
     radius: [10,10,10,10]
+
 <SwipeToDeleteItem>
     on_swipe_complete: app.on_swipe_complete(root)
     size_hint_y: None
@@ -271,3 +285,12 @@ Principal:
             id: content
             text: root.text
             _no_ripple_effect: True
+
+<MD4Card>
+    line_color: 0.1, 0.9, 0.9, 0.8
+    height: "250dp"
+    padding: "10dp", "10dp"
+    size_hint: 1, None
+    style: "outlined" 
+    radius: [10,10,10,10]
+    _no_ripple_effect: True

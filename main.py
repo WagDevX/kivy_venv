@@ -603,7 +603,7 @@ class InventApp(MDApp):
 
                 ean13 = barcode.get_barcode_class('ean13')
                 barcode_image = ean13(ean, writer=ImageWriter())
-                barcode_image.save(filename=os.path.join(os.getcwd(), "precos", ean))
+                barcode_image.save(filename=os.path.join(os.getcwd(), "prices", ean))
 
                 card = MD4Card(
                 md_bg_color="FFFFFF",
@@ -644,7 +644,7 @@ class InventApp(MDApp):
     def delete_item_2(self, ean):
         user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
         self.db.child("precos").child(ean).remove(user['idToken'])
-        file_path = os.path.join(os.getcwd(), "precos", ean  + '.png')
+        file_path = os.path.join(os.getcwd(), "prices", ean  + '.png')
         os.remove(file_path)
 
     def delete_item_abastecimento(self, button):

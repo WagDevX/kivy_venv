@@ -27,7 +27,7 @@ from kivymd.uix.card import MDCardSwipe
 from time import sleep
 from kivy_garden.zbarcam import ZBarCam
 from tarefas import show_snackbar
-from prices import abastecimento, add_abastecimento_firebase
+from prices import abastecimento, add_abastecimento_firebase, is_valid_ean
 from kivy.utils import platform
 import os
 from barcode.writer import ImageWriter
@@ -45,14 +45,10 @@ from kivy.animation import Animation
 class Telaprice(Screen):
     def on_kv_post(self, base_widget):
         self.ids.zbarcam.stop()
-
     def on_enter(self):
-        #self.ids.zbarcam.ids['xcamera']._camera.start()
         self.ids.zbarcam.start()
-
     def on_leave(self):
         self.ids.zbarcam.stop()
-        #self.ids.zbarcam.ids['xcamera']._camera.stop()
 
 class Principal(Screen):
     pass
@@ -532,80 +528,69 @@ class InventApp(MDApp):
         self.widgets[key] = card
 
     def add_prices(self, ean, qtd):
+        if is_valid_ean(ean) is False:
+            self.show_error_dialog('Digite um ean válido!')
+            return
         try:
-            eani = str(ean)
-            ean13 = barcode.get_barcode_class('ean13')
-            barcode_image = ean13(eani, writer=ImageWriter())
-            barcode_image.save(filename=os.path.join(os.getcwd(), "prices", ean))
+            if qtd == "":
+                qtd = 1
+            else:
+                qtd = int(qtd)
+            user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
+
+            ean_data = self.db.child("precos").child(ean).get(user['idToken']).val()
+
+            if ean_data:
+                ean_qtd = ean_data.get('Quantidade', 0)
+                nova_qtd = ean_qtd + qtd
+                data = {"Quantidade": nova_qtd}
+                self.db.child("precos").child(ean).update(data, user['idToken'])
+            else:
+                data = {"Quantidade": qtd, "User": self.usuario_logado}
+                self.db.child("precos").child(ean).set(data, user['idToken'])
+
+            if ean in self.widgets_precos:
+                grid_layout = self.widgets_precos[ean].children[0]
+                items = grid_layout.children
+                card = self.widgets_precos[ean]
+                for item in items:
+                    if isinstance(item, TwoLineAvatarIconListItem):
+                        print('widget achado')
+                        ean_data = self.db.child("precos").child(ean).get(user['idToken']).val()
+                        nova_qtd = ean_data.get('Quantidade', 0)
+                        item.text = f"QUANTIDADE NECESSÁRIA: {nova_qtd}"
+            else:
+                eani = str(ean)
+                ean13 = barcode.get_barcode_class('ean13')
+                barcode_image = ean13(eani, writer=ImageWriter())
+                barcode_image.save(filename=os.path.join(os.getcwd(), "prices", ean))
+                card = MD4Card(
+                    md_bg_color="FFFFFF",
+                    id=ean
+                )
+                layout = GridLayout(cols=1)
+                item = TwoLineAvatarIconListItem(
+                    CustomButton(
+                        icon="delete-circle-outline",
+                        on_press=self.delete_item,
+                        ean=ean
+                    ),
+                    text=f"QUANTIDADE NECESSÁRIA: {qtd}",
+                    secondary_text = f"Usuário: {self.usuario_logado}",
+                    font_style = "Subtitle1",
+                    _no_ripple_effect = True
+                )
+                layout.add_widget(item)
+                ean_layout = Image(source=f'prices/{ean}.png', allow_stretch=True)
+                layout.add_widget(ean_layout)
+
+                card.add_widget(layout)
+                self.root.get_screen('main').ids.md_list.add_widget(card)
+                item.ean = ean
+                show_snackbar("Adicionado com sucesso!")
+                self.widgets_precos[ean] = card
         except Exception:
             self.show_error_dialog('Verifique o código e tente novamente!')
-            return
-        else:
-            try:
-                if qtd == "":
-                    qtd = 1
-                else:
-                    qtd = int(qtd)
-                user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
-
-                ean_data = self.db.child("precos").child(ean).get(user['idToken']).val()
-
-                if ean_data:
-                    ean_qtd = ean_data.get('Quantidade', 0)
-                    nova_qtd = ean_qtd + qtd
-                    data = {"Quantidade": nova_qtd}
-                    self.db.child("precos").child(ean).update(data, user['idToken'])
-                else:
-                    data = {"Quantidade": qtd, "User": self.usuario_logado}
-                    self.db.child("precos").child(ean).set(data, user['idToken'])
-
-                items = self.root.get_screen('main').ids.md_list.children
-                if ean in self.widgets_precos:
-                    print('widget já criado')
-                    for item in items:
-                        print(item)
-                        if isinstance(item, MDCard):
-                            for child in item.children:
-                                if isinstance(child, TwoLineAvatarIconListItem):
-                                    print('widget achado')
-                                    ean_data = self.db.child("precos").child(ean).get(user['idToken']).val()
-                                    nova_qtd = ean_data.get('Quantidade', 0)
-                                    child.secondary_text = f"QTD: {nova_qtd}"
-                                    break 
-                else:
-                    eani = str(ean)
-                    ean13 = barcode.get_barcode_class('ean13')
-                    barcode_image = ean13(eani, writer=ImageWriter())
-                    barcode_image.save(filename=os.path.join(os.getcwd(), "prices", ean))
-                    card = MD4Card(
-                        md_bg_color="FFFFFF",
-                        id=ean
-                    )
-                    layout = GridLayout(cols=1)
-                    item = TwoLineAvatarIconListItem(
-                        CustomButton(
-                            icon="delete-circle-outline",
-                            on_press=self.delete_item,
-                            ean=ean
-                        ),
-                        id=ean,
-                        text=f"Quantidade: {qtd}",
-                        secondary_text = f"Usuário: {self.usuario_logado}",
-                        font_style = "H5",
-                        _no_ripple_effect = True
-                    )
-                    layout.add_widget(item)
-                    ean_layout = Image(source=f'prices/{ean}.png', allow_stretch=True)
-                    layout.add_widget(ean_layout)
-
-                    card.add_widget(layout)
-                    self.root.get_screen('main').ids.md_list.add_widget(card)
-                    item.ean = ean
-                    show_snackbar("Adicionado com sucesso!")
-                    self.widgets_precos[ean] = card
-            except Exception:
-                self.show_error_dialog('Verifique o código e tente novamente!')
-
     def add_all_items_from_firebase(self):
         try:
             for item in list(self.root.get_screen('main').ids.md_list.children):
@@ -628,11 +613,9 @@ class InventApp(MDApp):
                 item = TwoLineAvatarIconListItem(
                     CustomButton(
                         icon="delete-circle-outline",
-                        id=ean,
                         ean=ean,
                         on_press=self.delete_item
                     ),
-                    id=ean,
                     text=f"QUANTIDADE NECESSÁRIA: {qtd}",
                     secondary_text = f"Usuário: {user_l}",
                     font_style = "Subtitle1",

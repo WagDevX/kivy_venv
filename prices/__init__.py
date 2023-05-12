@@ -3,6 +3,22 @@ from kivymd.uix.list import OneLineRightIconListItem,IconRightWidget
 from tarefas import show_snackbar
 from kivymd.uix.list import TwoLineAvatarIconListItem,OneLineRightIconListItem,IconLeftWidget
 
+import barcode
+
+def is_valid_ean(ean):
+    if len(ean) != 13:
+        return False
+
+    # Calcula o dígito verificador esperado
+    check_digit = int(ean[-1])
+    ean_digits = [int(digit) for digit in ean[:-1]]
+    computed_check_digit = sum(ean_digits[::2]) + sum(ean_digits[1::2]) * 3
+    computed_check_digit = (10 - (computed_check_digit % 10)) % 10
+
+    # Verifica se o dígito verificador é igual ao esperado
+    return check_digit == computed_check_digit
+
+
 
 class CustomButton(IconLeftWidget):
     def __init__(self, **kwargs):

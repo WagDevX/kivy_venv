@@ -1,6 +1,7 @@
 #:import SwapTransition kivy.uix.screenmanager.SwapTransition
 #:import SlideTransition kivy.uix.screenmanager.SlideTransition
 #:import Window kivy.core.window.Window
+#:import show_snackbar tarefas.show_snackbar
 Principal:
     name: "main"
 
@@ -128,7 +129,7 @@ Principal:
                             MDIconButton:
                                 icon: "refresh-circle"
                                 icon_size: "40sp"
-                                on_press: app.add_all_items_from_firebase()
+                                on_press: if app.add_all_items_from_firebase(): show_snackbar("Atualizado!")
                     Tab:
                         title: "ABASTECIMENTO"
                         icon: "pickaxe"

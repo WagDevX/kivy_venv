@@ -197,12 +197,13 @@ class InventApp(MDApp):
         self.theme_cls.theme_style = "Light"
         self.screen_manager = ScreenManager()
         self.screen_manager.add_widget(Builder.load_file('login.kv'))
-        self.screen_manager.add_widget(Builder.load_file('main.kv'))
+        self.tela_principal =(Builder.load_file('main.kv'))
         self.tela_cadastro = (Builder.load_file('cadastro.kv')) 
         self.screen_manager.add_widget(Builder.load_file('tarefas.kv'))
         self.tela_prices = (Builder.load_file('./prices/precificacao.kv'))
         self.screen_manager.add_widget(self.tela_cadastro)
         self.screen_manager.add_widget(self.tela_prices)
+        self.screen_manager.add_widget(self.tela_principal)
         return self.screen_manager
     
     def on_symbols(self,instance,symbols):
@@ -287,10 +288,6 @@ class InventApp(MDApp):
                 title="ADICIONAR",
                 text="Deseja adicionar o produto onde?",
                 buttons=[
-                    MDFlatButton(
-                        text="PREÇOS", 
-                        on_release=lambda *args: self.add_prices(ean, qtd)
-                    ),
                     MDFlatButton(
                         text="ABASTECIMENTO", 
                         on_release=lambda *args: abastecimento(self,ean, qtd, desc)
@@ -535,62 +532,79 @@ class InventApp(MDApp):
         self.widgets[key] = card
 
     def add_prices(self, ean, qtd):
-            if qtd == "":
-                qtd = 1
-            else:
-                qtd = int(qtd)
-            user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
+        try:
+            eani = str(ean)
+            ean13 = barcode.get_barcode_class('ean13')
+            barcode_image = ean13(eani, writer=ImageWriter())
+            barcode_image.save(filename=os.path.join(os.getcwd(), "prices", ean))
+        except Exception:
+            self.show_error_dialog('Verifique o código e tente novamente!')
+            return
+        else:
+            try:
+                if qtd == "":
+                    qtd = 1
+                else:
+                    qtd = int(qtd)
+                user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
 
-            ean_data = self.db.child("precos").child(ean).get(user['idToken']).val()
+                ean_data = self.db.child("precos").child(ean).get(user['idToken']).val()
 
-            if ean_data:
-                ean_qtd = ean_data.get('Quantidade', 0)
-                nova_qtd = ean_qtd + qtd
-                data = {"Quantidade": nova_qtd}
-                self.db.child("precos").child(ean).update(data, user['idToken'])
-            else:
-                data = {"Quantidade": qtd}
-                self.db.child("precos").child(ean).set(data, user['idToken'])
+                if ean_data:
+                    ean_qtd = ean_data.get('Quantidade', 0)
+                    nova_qtd = ean_qtd + qtd
+                    data = {"Quantidade": nova_qtd}
+                    self.db.child("precos").child(ean).update(data, user['idToken'])
+                else:
+                    data = {"Quantidade": qtd, "User": self.usuario_logado}
+                    self.db.child("precos").child(ean).set(data, user['idToken'])
 
-            items = self.root.get_screen('main').ids.md_list.children
-            if ean in self.widgets_precos:
-                print('widget já criado')
-                for item in items:
-                    if isinstance(item, TwoLineAvatarIconListItem):
-                        print('widget achado')
-                        ean_data = self.db.child("precos").child(ean).get(user['idToken']).val()
-                        nova_qtd = ean_data.get('Quantidade', 0)
-                        item.secondary_text = f"QTD: {nova_qtd}"
-            else:
-                eani = str(ean)
-                ean13 = barcode.get_barcode_class('ean13')
-                barcode_image = ean13(eani, writer=ImageWriter())
-                barcode_image.save(filename=os.path.join(os.getcwd(), "precos", ean))
-                card = MD4Card(
-                    md_bg_color="FFFFFF",
-                    id=ean
-                )
-                layout = GridLayout(cols=1)
-                item = TwoLineAvatarIconListItem(
-                    CustomButton(
-                        icon="delete-circle-outline",
-                        on_press=self.delete_item,
-                        ean=ean
-                    ),
-                    id=ean,
-                    text=ean,
-                    secondary_text = f"QTD: {qtd}",
-                    font_style = "H5"
-                )
-                layout.add_widget(item)
-                ean_layout = Image(source=f'precos/{ean}.png', allow_stretch=True)
-                layout.add_widget(ean_layout)
+                items = self.root.get_screen('main').ids.md_list.children
+                if ean in self.widgets_precos:
+                    print('widget já criado')
+                    for item in items:
+                        print(item)
+                        if isinstance(item, MDCard):
+                            for child in item.children:
+                                if isinstance(child, TwoLineAvatarIconListItem):
+                                    print('widget achado')
+                                    ean_data = self.db.child("precos").child(ean).get(user['idToken']).val()
+                                    nova_qtd = ean_data.get('Quantidade', 0)
+                                    child.secondary_text = f"QTD: {nova_qtd}"
+                                    break 
+                else:
+                    eani = str(ean)
+                    ean13 = barcode.get_barcode_class('ean13')
+                    barcode_image = ean13(eani, writer=ImageWriter())
+                    barcode_image.save(filename=os.path.join(os.getcwd(), "prices", ean))
+                    card = MD4Card(
+                        md_bg_color="FFFFFF",
+                        id=ean
+                    )
+                    layout = GridLayout(cols=1)
+                    item = TwoLineAvatarIconListItem(
+                        CustomButton(
+                            icon="delete-circle-outline",
+                            on_press=self.delete_item,
+                            ean=ean
+                        ),
+                        id=ean,
+                        text=f"Quantidade: {qtd}",
+                        secondary_text = f"Usuário: {self.usuario_logado}",
+                        font_style = "H5",
+                        _no_ripple_effect = True
+                    )
+                    layout.add_widget(item)
+                    ean_layout = Image(source=f'prices/{ean}.png', allow_stretch=True)
+                    layout.add_widget(ean_layout)
 
-                card.add_widget(layout)
-                self.root.get_screen('main').ids.md_list.add_widget(card)
-                item.ean = ean
-                show_snackbar("Adicionado com sucesso")
-                self.widgets_precos[ean] = card
+                    card.add_widget(layout)
+                    self.root.get_screen('main').ids.md_list.add_widget(card)
+                    item.ean = ean
+                    show_snackbar("Adicionado com sucesso!")
+                    self.widgets_precos[ean] = card
+            except Exception:
+                self.show_error_dialog('Verifique o código e tente novamente!')
 
     def add_all_items_from_firebase(self):
         try:
@@ -600,6 +614,7 @@ class InventApp(MDApp):
             all_items = self.db.child("precos").get(user['idToken'])
             for ean, data in all_items.val().items():
                 qtd = data.get("Quantidade")
+                user_l = data.get("User")
 
                 ean13 = barcode.get_barcode_class('ean13')
                 barcode_image = ean13(ean, writer=ImageWriter())
@@ -618,20 +633,22 @@ class InventApp(MDApp):
                         on_press=self.delete_item
                     ),
                     id=ean,
-                    text=ean,
-                    secondary_text = f"QTD: {qtd}",
-                    font_style = "H5",
+                    text=f"QUANTIDADE NECESSÁRIA: {qtd}",
+                    secondary_text = f"Usuário: {user_l}",
+                    font_style = "Subtitle1",
                     _no_ripple_effect = True
                 )
                 layout.add_widget(item)
-                ean_layout = Image(source=f'precos/{ean}.png', allow_stretch=True)
+                ean_layout = Image(source=f'prices/{ean}.png', allow_stretch=True)
                 layout.add_widget(ean_layout)
                 card.add_widget(layout)
                 self.root.get_screen('main').ids.md_list.add_widget(card)
                 item.ean = ean
                 self.widgets_precos[ean] = card
         except Exception:
-            pass
+            show_snackbar("Erro o carregar EANS")
+        else:
+            return True
 
     def delete_item(self, button):
         ean = button.ean
@@ -640,12 +657,14 @@ class InventApp(MDApp):
         self.db.child("precos").child(ean).remove(user['idToken'])
         parent_item = button.parent.parent.parent.parent
         parent_item.parent.remove_widget(parent_item)
+        show_snackbar("Iten excluído!")
 
     def delete_item_2(self, ean):
         user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
         self.db.child("precos").child(ean).remove(user['idToken'])
         file_path = os.path.join(os.getcwd(), "prices", ean  + '.png')
         os.remove(file_path)
+        show_snackbar("Itens excluídos!")
 
     def delete_item_abastecimento(self, button):
         ean = button.ean
@@ -670,14 +689,14 @@ class InventApp(MDApp):
             left_action_items = [
                 [
                     "close",
-                    lambda x : self.root.get_screen('main').ids.md_list.unselected_all(),
+                    lambda x: self.tela_principal.ids.md_list.unselected_all(),
                 ]
             ]
             right_action_items = [["trash-can", lambda x: self.delete_selected_item(x)], ["dots-vertical"]]
         else:
             md_bg_color = (0, 0, 0, 1)
             left_action_items = [["menu"]]
-            right_action_items = ["dots-vertical"]
+            right_action_items = [["dots-vertical"]]
             self.root.get_screen('main').ids.toolbar.title = "Itens a precificar"
 
         Animation(md_bg_color=md_bg_color, d=0.2).start(self.root.get_screen('main').ids.toolbar)
@@ -685,11 +704,6 @@ class InventApp(MDApp):
         self.root.get_screen('main').ids.toolbar.right_action_items = right_action_items
 
     def on_selected(self, instance_selection_list, instance_selection_item):
-        selected_items = instance_selection_list.get_selected_list_items()
-        print(instance_selection_item.id)
-        for item in selected_items:
-            ean = item.children[1].id
-            print(ean[-1])
         self.root.get_screen('main').ids.toolbar.title = str(
             len(instance_selection_list.get_selected_list_items())
         )

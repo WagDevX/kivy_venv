@@ -30,7 +30,7 @@ def add_abastecimento_firebase(self):
         for item in list(self.root.get_screen('main').ids.lista_abastecimento.children):
             self.root.get_screen('main').ids.lista_abastecimento.remove_widget(item)
         user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
-        all_items = self.db.child("abastecimento").get(user['idToken'])
+        all_items = self.db.child(self.setor).child("abastecimento").get(user['idToken'])
         for ean, data in all_items.val().items():
             qtd = data.get("Quantidade")
             desc = data.get("Descrição")
@@ -66,12 +66,12 @@ def abastecimento(self, ean, qtd, desc):
             ean_qtd = ean_data.get('Quantidade', 0)
             nova_qtd = ean_qtd + qtd
             data = {"Quantidade": nova_qtd}
-            self.db.child("abastecimento").child(ean).update(data, user['idToken'])
+            self.db.child(self.setor).child("abastecimento").child(ean).update(data, user['idToken'])
         else:
             # Cria um novo item caso o EAN não exista
             data = {"Quantidade": qtd,
                     "Descrição": desc}
-            self.db.child("abastecimento").child(ean).set(data, user['idToken'])
+            self.db.child(self.setor).child("abastecimento").child(ean).set(data, user['idToken'])
 
         # Atualiza o widget do item correspondente
         for item in self.root.get_screen('main').ids.lista_abastecimento.children:

@@ -14,7 +14,7 @@ firebaseConfig = {
     "databaseURL": "https://inventariocob-default-rtdb.firebaseio.com"
   }
 
-def envia_tarefas_firebase(title, desc, prior):
+def envia_tarefas_firebase(title, desc, prior, setor):
         agora = datetime.datetime.now()
         agora_sem_milissegundos = agora.strftime("%d/%m/%y %H:%M")
         firebase = pyrebase.initialize_app(firebaseConfig)
@@ -32,7 +32,7 @@ def envia_tarefas_firebase(title, desc, prior):
                     "Data_fim": "None",
                     "Data_criacao": agora_sem_milissegundos
                     }
-            db.child("tasks").push(data, user['idToken'])
+            db.child(setor).child("tasks").push(data, user['idToken'])
         except Exception:
             texto = "Erro ao adicionar tarefa!"
             show_snackbar(texto)
@@ -41,7 +41,7 @@ def envia_tarefas_firebase(title, desc, prior):
             show_snackbar(texto)
             return True
         
-def inicia_tarefas_firebase(key,title,desc, prio, resp):
+def inicia_tarefas_firebase(key,title,desc, prio, resp, setor):
         agora = datetime.datetime.now()
         agora_sem_milissegundos = agora.strftime("%d/%m/%y %H:%M")
         firebase = pyrebase.initialize_app(firebaseConfig)
@@ -58,7 +58,7 @@ def inicia_tarefas_firebase(key,title,desc, prio, resp):
                     "Data_in": agora_sem_milissegundos,
                     "Data_fim": "None",
                     }
-            db.child("tasks").child(key).set(data, user['idToken'])
+            db.child(setor).child("tasks").child(key).set(data, user['idToken'])
         except Exception:
             texto = "Erro ao iniciar tarefa!"
             show_snackbar(texto)
@@ -87,7 +87,7 @@ def show_snackbar(textosnack):
     )
     snackbar.open()
 
-def finaliza_tarefas_firebase(key,title,desc, prio, resp, data_in):
+def finaliza_tarefas_firebase(key,title,desc, prio, resp, data_in,setor):
         agora = datetime.datetime.now()
         agora_sem_milissegundos = agora.strftime("%d/%m/%y %H:%M")
         firebase = pyrebase.initialize_app(firebaseConfig)
@@ -104,7 +104,7 @@ def finaliza_tarefas_firebase(key,title,desc, prio, resp, data_in):
                     "Data_fim": agora_sem_milissegundos,
                     "Data_in": data_in,
                     }
-            db.child("tasks").child(key).set(data, user['idToken'])
+            db.child(setor).child("tasks").child(key).set(data, user['idToken'])
         except Exception:
             texto = "Erro ao finalizar tarefa!"
             show_snackbar(texto)

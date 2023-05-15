@@ -169,33 +169,40 @@ Principal:
                                 id: name
                                 hint_text: "nome completo"
                                 icon_right: "account"
-                                pos_hint: {'center_x': 0.5, 'center_y': 0.85}
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.90}
                             CampoDados:
                                 font_size: "18sp"
                                 mode: "rectangle"
                                 id: birth
                                 hint_text: "nascimento dd/mm/yy"
                                 icon_right: "calendar"
-                                pos_hint: {'center_x': 0.5, 'center_y': 0.70}
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.77}
                             CampoDados:
                                 font_size: "18sp"
                                 mode: "rectangle"
                                 id: pnum
                                 hint_text: "celular"
                                 icon_right: "cellphone"
-                                pos_hint: {'center_x': 0.5, 'center_y': 0.55}
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.64}
                             CampoDados:
                                 font_size: "18sp"
                                 mode: "rectangle"
                                 id: mail
                                 hint_text: "e-mail"
                                 icon_right: "mail"
-                                pos_hint: {'center_x': 0.5, 'center_y': 0.40}                 
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.51}                 
                             CampoDados:
                                 font_size: "18sp"
                                 mode: "rectangle"
                                 id: username
                                 hint_text: "nome de usuário"
+                                icon_right: "account"
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.38}
+                            CampoDados:
+                                font_size: "18sp"
+                                mode: "rectangle"
+                                id: setor
+                                hint_text: "Setor"
                                 icon_right: "account"
                                 pos_hint: {'center_x': 0.5, 'center_y': 0.25}
                             MDRectangleFlatIconButton:
@@ -206,7 +213,7 @@ Principal:
                                 line_color: 0, 0, 0, 0
                                 pos_hint: {"center_x": .5, "center_y": .12}
                                 on_press: 
-                                    app.show_alert_dialog()
+                                    app.show_alert_dialog_logout()
                     Tab:
                         title: "Configurações"
                         icon: "account-settings"

@@ -1,27 +1,35 @@
+import kivy
+kivy.require('1.11.1')
+
 from kivy.app import App
-from kivy.clock import Clock
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
-from android import Android
+from kivy.utils import platform
 
-class USBKeyboardEmulatorApp(App):
+if platform == 'android':
+    from plyer import usb_hid
+
+
+class EANApp(App):
+
     def build(self):
-        self.android = Android()
-        self.android.toggle_usb(True)  # Habilita a emulação de teclado USB
-        self.ean_list = ['1234567890', '0987654321', '1122334455']  # Lista de EANs a serem enviados
-        self.index = 0  # Índice da lista de EANs
-        Clock.schedule_interval(self.send_ean, 1)  # Envie um EAN a cada segundo
-        return Button(text='Enviar EANs')
+        layout = BoxLayout(orientation='vertical', spacing=10)
+        
+        self.ean_input = TextInput(multiline=False)
+        layout.add_widget(self.ean_input)
+        
+        send_button = Button(text="Enviar", on_press=self.send_ean)
+        layout.add_widget(send_button)
+        
+        return layout
+    
+    def send_ean(self, instance):
+        ean_code = self.ean_input.text.strip()
+        
+        if platform == 'android':
+            usb_hid.type_string(ean_code)
 
-    def send_ean(self, dt):
-        if self.index < len(self.ean_list):
-            ean = self.ean_list[self.index]
-            self.android.usb_write(ean)  # Envia o EAN atual
-            Clock.schedule_once(lambda dt: self.android.usb_write('\n'), 0.1)  # Envia o evento da tecla Enter
-            self.index += 1
-        else:
-            Clock.unschedule(self.send_ean)  # Para de enviar EANs quando a lista acabar
 
 if __name__ == '__main__':
-    USBKeyboardEmulatorApp().run()
-
-
+    EANApp().run()

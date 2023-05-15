@@ -39,8 +39,16 @@ from kivy.animation import Animation
 
 
 
-
-
+firebaseConfig = {
+    "apiKey": "AIzaSyCvJ9mXa6vY6EwPiXOY1o7KjMye22k0OJA",
+    "authDomain": "inventariocob.firebaseapp.com",
+    "projectId": "inventariocob",
+    "storageBucket": "inventariocob.appspot.com",
+    "messagingSenderId": "802697439429",
+    "appId": "1:802697439429:web:846552f1ba89ed60aa68ac",
+    "measurementId": "G-0SRYWQ5YJ3",
+    "databaseURL": "https://inventariocob-default-rtdb.firebaseio.com"
+  }
 
 class Telaprice(Screen):
     def on_kv_post(self, base_widget):
@@ -51,7 +59,204 @@ class Telaprice(Screen):
         self.ids.zbarcam.stop()
 
 class Principal(Screen):
-    pass
+    widgets = {}
+    
+    def dialogo_finaliza_tarefa(self,widget, title, desc, prio, data_in, resp,  status=False):
+        self.usuario_logado = self.ids.username.text
+        if resp != self.usuario_logado:
+            return
+        if status == False:
+            confirmation_dialog = MDDialog(
+                title="Confirmação",
+                text="Você tem certeza de que deseja finalizar a tarefa?",
+                buttons=[
+                    MDFlatButton(
+                        text="Cancelar", 
+                        on_release=lambda *args: confirmation_dialog.dismiss()
+                    ),
+                    MDFlatButton(
+                        text="Sim", 
+                        on_press=lambda *args: finaliza_tarefas_firebase(widget.id, title, desc, prio, self.ids.username.text, data_in, self.ids.setor.text), 
+                        on_release=lambda *args: confirmation_dialog.dismiss()
+                    ),
+                ],
+            )
+            confirmation_dialog.open()
+        else:
+            return
+        
+    def dialogo_inicia_tarefa(self,widget, title, desc, prio, resp,  status=False):
+        if status == False:
+            confirmation_dialog = MDDialog(
+                title="Confirmação",
+                text="Você tem certeza de que deseja iniciar a tarefa?",
+                buttons=[
+                    MDFlatButton(
+                        text="Cancelar", 
+                        on_release=lambda *args: confirmation_dialog.dismiss()
+                    ),
+                    MDFlatButton(
+                        text="Sim", 
+                        on_press=lambda *args: inicia_tarefas_firebase(widget.id, title, desc, prio, self.ids.username.text, self.ids.setor.text), 
+                        on_release=lambda *args: confirmation_dialog.dismiss()
+                    ),
+                ],
+            )
+            confirmation_dialog.open()
+        else:
+            return
+
+    def show_snackbar(self, textosnack):
+            self.snackbar = MDSnackbar(
+            MDLabel(
+                text=textosnack,
+                theme_text_color="Custom",
+                text_color="#393231",
+            ),
+            MDSnackbarCloseButton(
+                icon="check",
+                theme_text_color="Custom",
+                text_color="#8E353C",
+                _no_ripple_effect=True,
+            ),
+            y=80,
+            pos_hint={"center_x": 0.5},
+            size_hint_x=0.9,
+            md_bg_color="AAFF00",
+            )
+            self.snackbar.open()
+
+    def adicionar_tarefa(self,key, titulo, descricao, prioridade, responsavel, status, status_fim, data_in, data_fin):
+        if status == True:
+            ico = "clock-check"
+            botao = f"{data_in}"
+        else:
+            ico = "clock-alert"
+            botao = "Iniciar tarefa"
+        if status_fim == True:
+            icof = "check-all"
+            botaof = f"{data_fin}"
+        else:
+            icof = "checkbox-marked-outline"
+            botaof = "Finalizar"
+
+        if '1' in prioridade:
+            pri = '1'
+            prio = "#abbdf2"
+        elif '2' in prioridade:
+            pri = '2'
+            prio = "#d5def8"
+        elif '3' in prioridade:
+            pri = '3'
+            prio = "#eaeefb"
+        if key in self.widgets:
+            tasks_layout = self.ids.tasks_ongoing
+            tasks_layout2 = self.ids.tasks
+            tasks_layout.remove_widget(self.widgets[key])
+            tasks_layout2.remove_widget(self.widgets[key])
+
+        card = MD3Card(
+            md_bg_color=prio,
+        )
+        layout = MDRelativeLayout()
+
+        titulo_widget = TwoLineListItem(
+            id=key,
+            _txt_left_pad = "0dp",
+            _txt_bot_pad = "10dp",
+            pos_hint={"top": 1.05, "right": 1},
+            font_style="H5",
+            text=titulo,
+            secondary_text=f"Reponsável: {responsavel}!",
+        )
+        layout.add_widget(titulo_widget)
+
+        descricao_widget = MDLabel(
+            font_name = "Kumbh",
+            pos_hint={"top": 0.92, "left": 1},
+            text=descricao,
+            font_style="Subtitle1",
+        )
+        layout.add_widget(descricao_widget)
+
+        priodidade_widget = MDLabel(
+            pos_hint={"center_x": 0.51, "center_y": 0.43},
+            text=pri,
+            font_style="Subtitle1",
+            opacity="0.0",
+        )
+        layout.add_widget(priodidade_widget)
+
+        resp_widget = MDLabel(
+            pos_hint={"middle": 1, "left": 1},
+            text=responsavel,
+            font_style="Subtitle1",
+            opacity="0.0",
+        )
+        layout.add_widget(resp_widget)
+
+        task_button = MDRectangleFlatIconButton(
+            text=botao,
+            icon=ico,
+            line_color=(0, 0, 0, 0),
+            pos_hint={"bottom": 1, "left": 1},
+            id=key,
+            on_press=lambda *args: self.dialogo_inicia_tarefa(task_button,titulo_widget.text, descricao_widget.text, priodidade_widget.text, resp_widget.text, status),
+        )
+        layout.add_widget(task_button)
+
+        finish_button = MDRectangleFlatIconButton(
+            text=botaof,
+            icon=icof,
+            line_color=(0, 0, 0, 0),
+            pos_hint={"bottom": 1, "right": 1},
+            id=key,
+            on_press=lambda *args: self.dialogo_finaliza_tarefa(finish_button,titulo_widget.text, descricao_widget.text, priodidade_widget.text, data_in,resp_widget.text ,status_fim),
+        )
+        tasks_layout = self.ids.tasks
+        if status == True:
+            layout.add_widget(finish_button)
+        if status == True:
+            tasks_layout = self.ids.tasks_ongoing
+        if status_fim == True:
+            tasks_layout = self.ids.tasks_finished
+    
+        card.add_widget(layout)
+        tasks_layout.add_widget(card)
+        self.widgets[key] = card
+
+    @mainthread
+    def stream_handler(self, message):
+        try:
+            print(message["event"]) 
+            caminho = message["path"]
+            id = caminho.lstrip("/") 
+            data = message["data"]
+            if caminho == "/":
+                for k, i in data.items():
+                    self.adicionar_tarefa(k,i["Titulo"],i["Descricao"],i["Prioridade"],i["Responsável"],i["Status"],i["Finalizada"], i["Data_in"], i["Data_fim"])
+            else:
+                self.adicionar_tarefa(id,data["Titulo"],data["Descricao"],data["Prioridade"],data["Responsável"],data["Status"],data["Finalizada"], data["Data_in"], data["Data_fim"])
+                texto = "Tarefas atualizadas!"
+                self.show_snackbar(texto)
+        except Exception:
+            texto = "Erro de conexão!"
+            self.show_snackbar(texto)
+
+    firebase = pyrebase.initialize_app(firebaseConfig)
+    auth = firebase.auth()
+    db = firebase.database()
+    user = auth.sign_in_with_email_and_password("admin@admin.com", "123456") 
+
+    def on_enter(self, *args):
+        setor = self.ids.setor.text
+        self.my_stream = self.db.child(setor).child("tasks").stream(self.stream_handler, self.user['idToken'])
+    
+    def close_stream(self):
+        self.my_stream.close()
+
+    def on_pre_leave(self):
+        self.my_stream.close()
 
 class Tarefas(Screen):
     pass
@@ -67,17 +272,6 @@ class SwipeToDeleteItem(MDCardSwipe):
 
 class userconfigscreen(Screen):
     pass
-
-firebaseConfig = {
-    "apiKey": "AIzaSyCvJ9mXa6vY6EwPiXOY1o7KjMye22k0OJA",
-    "authDomain": "inventariocob.firebaseapp.com",
-    "projectId": "inventariocob",
-    "storageBucket": "inventariocob.appspot.com",
-    "messagingSenderId": "802697439429",
-    "appId": "1:802697439429:web:846552f1ba89ed60aa68ac",
-    "measurementId": "G-0SRYWQ5YJ3",
-    "databaseURL": "https://inventariocob-default-rtdb.firebaseio.com"
-  }
 
 class MD3Card(MDCard):
     text = StringProperty()
@@ -151,6 +345,7 @@ class CustomButton(IconLeftWidget):
         super().__init__(**kwargs)
 
 class InventApp(MDApp):
+    setor = None
     overlay_color = get_color_from_hex("#6042e4")
     add_abastecimento_firebase = add_abastecimento_firebase
     widgets = {}
@@ -165,27 +360,10 @@ class InventApp(MDApp):
     dialog2 = None
     dialog3 = None
     login_checked = False
-
-    @mainthread
-    def stream_handler(self, message):
-        try:
-            print(message["event"]) 
-            caminho = message["path"]
-            id = caminho.lstrip("/") 
-            data = message["data"]
-            if caminho == "/":
-                for k, i in data.items():
-                    self.adicionar_tarefa(k,i["Titulo"],i["Descricao"],i["Prioridade"],i["Responsável"],i["Status"],i["Finalizada"], i["Data_in"], i["Data_fim"])
-            else:
-                self.adicionar_tarefa(id,data["Titulo"],data["Descricao"],data["Prioridade"],data["Responsável"],data["Status"],data["Finalizada"], data["Data_in"], data["Data_fim"])
-                texto = "Tarefas atualizadas!"
-                self.show_snackbar(texto)
-        except Exception:
-            texto = "Erro de conexão!"
-            self.show_snackbar(texto)
+        
 
     def on_stop(self):
-        self.my_stream.close()
+        Principal.close_stream
     
     def build(self):
         self.theme_cls.material_style = "M3"
@@ -223,7 +401,7 @@ class InventApp(MDApp):
             return
 
         # Caso todos os campos estejam preenchidos corretamente, envia a tarefa para o Firebase
-        envia_tarefas_firebase(title, description, priority)
+        envia_tarefas_firebase(title, description, priority, self.setor)
 
     def verifica_campos_cadastro(self):
         # obtém, os valores dos campos de entrada
@@ -257,27 +435,6 @@ class InventApp(MDApp):
             auto_dismiss=True
         )
         dialog.open()
-    
-    def dialogo_confirmacao_tarefa(self,widget, title, desc, prio, resp,  status=False):
-        if status == False:
-            confirmation_dialog = MDDialog(
-                title="Confirmação",
-                text="Você tem certeza de que deseja iniciar a tarefa?",
-                buttons=[
-                    MDFlatButton(
-                        text="Cancelar", 
-                        on_release=lambda *args: confirmation_dialog.dismiss()
-                    ),
-                    MDFlatButton(
-                        text="Sim", 
-                        on_press=lambda *args: inicia_tarefas_firebase(widget.id, title, desc, prio, self.usuario_logado), 
-                        on_release=lambda *args: confirmation_dialog.dismiss()
-                    ),
-                ],
-            )
-            confirmation_dialog.open()
-        else:
-            return
         
     def dialogo_adiciona_item_da_lista(self, ean, qtd, desc):
         confirmation_dialog = MDDialog(
@@ -292,36 +449,10 @@ class InventApp(MDApp):
             )
         confirmation_dialog.open()
 
-    def dialogo_finaliza_tarefa(self,widget, title, desc, prio, data_in, resp,  status=False):
-        if resp != self.usuario_logado:
-            return
-        if status == False:
-            confirmation_dialog = MDDialog(
-                title="Confirmação",
-                text="Você tem certeza de que deseja finalizar a tarefa?",
-                buttons=[
-                    MDFlatButton(
-                        text="Cancelar", 
-                        on_release=lambda *args: confirmation_dialog.dismiss()
-                    ),
-                    MDFlatButton(
-                        text="Sim", 
-                        on_press=lambda *args: finaliza_tarefas_firebase(widget.id, title, desc, prio, self.usuario_logado, data_in), 
-                        on_release=lambda *args: confirmation_dialog.dismiss()
-                    ),
-                ],
-            )
-            confirmation_dialog.open()
-        else:
-            return
-
     def on_start(self):
         if platform =='android':
             from android.permissions import request_permissions, Permission
             request_permissions([Permission.WRITE_EXTERNAL_STORAGE,Permission.CAMERA])
-        add_abastecimento_firebase(self)
-        self.add_all_items_from_firebase()
-        self.my_stream = self.db.child("tasks").stream(self.stream_handler, self.user['idToken'])
         if not self.login_checked:
             try:
                 with open('dados_login.json', 'r') as f:
@@ -337,7 +468,7 @@ class InventApp(MDApp):
             except Exception:
                 pass
                     
-    def show_alert_dialog(self):
+    def show_alert_dialog_logout(self):
         if not self.dialog:
             self.dialog = MDDialog(
                 text="Tem certeza que deseja deslogar?",
@@ -403,6 +534,7 @@ class InventApp(MDApp):
         self.dialog.dismiss()
 
     def ir_para_login(self, *args):
+        self.root.get_screen('main').ids.tasks.clear_widgets()
         limpar_dados_login()
         self.dialog.dismiss()
         self.root.current = "login"
@@ -411,6 +543,8 @@ class InventApp(MDApp):
     def verifica_dados_firebase(self, user, password, logado=False):
         verifica_dados_firebase(self, user, password, logado_antes=logado)
         atualiza_dados_app(self)
+        add_abastecimento_firebase(self)
+        self.add_all_items_from_firebase()
         
     def envia_dados_firebase(self, nome, mail, pnum, passw, users, birth):
         if envia_dados_firebase(self, nome, mail, pnum, passw, users, birth):
@@ -428,105 +562,6 @@ class InventApp(MDApp):
         date_dialog.bind(on_save=self.on_save, on_cancel=self.on_cancel)
         date_dialog.open()  
 
-    def adicionar_tarefa(self,key, titulo, descricao, prioridade, responsavel, status, status_fim, data_in, data_fin):
-        if status == True:
-            ico = "clock-check"
-            botao = f"{data_in}"
-        else:
-            ico = "clock-alert"
-            botao = "Iniciar tarefa"
-        if status_fim == True:
-            icof = "check-all"
-            botaof = f"{data_fin}"
-        else:
-            icof = "checkbox-marked-outline"
-            botaof = "Finalizar"
-
-        if '1' in prioridade:
-            pri = '1'
-            prio = "#abbdf2"
-        elif '2' in prioridade:
-            pri = '2'
-            prio = "#d5def8"
-        elif '3' in prioridade:
-            pri = '3'
-            prio = "#eaeefb"
-        if key in self.widgets:
-            tasks_layout = self.root.get_screen('main').ids.tasks_ongoing
-            tasks_layout2 = self.root.get_screen('main').ids.tasks
-            tasks_layout.remove_widget(self.widgets[key])
-            tasks_layout2.remove_widget(self.widgets[key])
-
-        card = MD3Card(
-            md_bg_color=prio,
-        )
-        layout = MDRelativeLayout()
-
-        titulo_widget = TwoLineListItem(
-            id=key,
-            _txt_left_pad = "0dp",
-            _txt_bot_pad = "10dp",
-            pos_hint={"top": 1.05, "right": 1},
-            font_style="H5",
-            text=titulo,
-            secondary_text=f"Reponsável: {responsavel}!",
-        )
-        layout.add_widget(titulo_widget)
-
-        descricao_widget = MDLabel(
-            font_name = "Kumbh",
-            pos_hint={"top": 0.92, "left": 1},
-            text=descricao,
-            font_style="Subtitle1",
-        )
-        layout.add_widget(descricao_widget)
-
-        priodidade_widget = MDLabel(
-            pos_hint={"center_x": 0.51, "center_y": 0.43},
-            text=pri,
-            font_style="Subtitle1",
-            opacity="0.0",
-        )
-        layout.add_widget(priodidade_widget)
-
-        resp_widget = MDLabel(
-            pos_hint={"middle": 1, "left": 1},
-            text=responsavel,
-            font_style="Subtitle1",
-            opacity="0.0",
-        )
-        layout.add_widget(resp_widget)
-
-        task_button = MDRectangleFlatIconButton(
-            text=botao,
-            icon=ico,
-            line_color=(0, 0, 0, 0),
-            pos_hint={"bottom": 1, "left": 1},
-            id=key,
-            on_press=lambda *args: self.dialogo_confirmacao_tarefa(task_button,titulo_widget.text, descricao_widget.text, priodidade_widget.text, resp_widget.text, status),
-        )
-        layout.add_widget(task_button)
-
-        finish_button = MDRectangleFlatIconButton(
-            text=botaof,
-            icon=icof,
-            line_color=(0, 0, 0, 0),
-            pos_hint={"bottom": 1, "right": 1},
-            id=key,
-            on_press=lambda *args: self.dialogo_finaliza_tarefa(finish_button,titulo_widget.text, descricao_widget.text, priodidade_widget.text, data_in,resp_widget.text ,status_fim),
-        )
-        tasks_layout = self.root.get_screen('main').ids.tasks
-        if status == True:
-            layout.add_widget(finish_button)
-        if status == True:
-            tasks_layout = self.root.get_screen('main').ids.tasks_ongoing
-        if status_fim == True:
-            tasks_layout = self.root.get_screen('main').ids.tasks_finished
-    
-        card.add_widget(layout)
-        tasks_layout.add_widget(card)
-        self.widgets[key] = card
-
     def add_prices(self, ean, qtd):
         if is_valid_ean(ean) is False:
             self.show_error_dialog('Digite um ean válido!')
@@ -538,16 +573,16 @@ class InventApp(MDApp):
                 qtd = int(qtd)
             user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
 
-            ean_data = self.db.child("precos").child(ean).get(user['idToken']).val()
+            ean_data = self.db.child(self.setor).child("precos").child(ean).get(user['idToken']).val()
 
             if ean_data:
                 ean_qtd = ean_data.get('Quantidade', 0)
                 nova_qtd = ean_qtd + qtd
                 data = {"Quantidade": nova_qtd}
-                self.db.child("precos").child(ean).update(data, user['idToken'])
+                self.db.child(self.setor).child("precos").child(ean).update(data, user['idToken'])
             else:
                 data = {"Quantidade": qtd, "User": self.usuario_logado}
-                self.db.child("precos").child(ean).set(data, user['idToken'])
+                self.db.child(self.setor).child("precos").child(ean).set(data, user['idToken'])
 
             if ean in self.widgets_precos:
                 grid_layout = self.widgets_precos[ean].children[0]
@@ -556,9 +591,10 @@ class InventApp(MDApp):
                 for item in items:
                     if isinstance(item, TwoLineAvatarIconListItem):
                         print('widget achado')
-                        ean_data = self.db.child("precos").child(ean).get(user['idToken']).val()
+                        ean_data = self.db.child(self.setor).child("precos").child(ean).get(user['idToken']).val()
                         nova_qtd = ean_data.get('Quantidade', 0)
                         item.text = f"QUANTIDADE NECESSÁRIA: {nova_qtd}"
+                        show_snackbar("Quantidade atualizada!")
             else:
                 eani = str(ean)
                 ean13 = barcode.get_barcode_class('ean13')
@@ -591,12 +627,13 @@ class InventApp(MDApp):
                 self.widgets_precos[ean] = card
         except Exception:
             self.show_error_dialog('Verifique o código e tente novamente!')
+
     def add_all_items_from_firebase(self):
         try:
             for item in list(self.root.get_screen('main').ids.md_list.children):
                 self.root.get_screen('main').ids.md_list.remove_widget(item)
             user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
-            all_items = self.db.child("precos").get(user['idToken'])
+            all_items = self.db.child(self.setor).child("precos").get(user['idToken'])
             for ean, data in all_items.val().items():
                 qtd = data.get("Quantidade")
                 user_l = data.get("User")
@@ -629,7 +666,7 @@ class InventApp(MDApp):
                 item.ean = ean
                 self.widgets_precos[ean] = card
         except Exception:
-            show_snackbar("Erro o carregar EANS")
+            pass
         else:
             return True
 
@@ -637,14 +674,14 @@ class InventApp(MDApp):
         ean = button.ean
         print(button.ean)
         user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
-        self.db.child("precos").child(ean).remove(user['idToken'])
+        self.db.child(self.setor).child("precos").child(ean).remove(user['idToken'])
         parent_item = button.parent.parent.parent.parent
         parent_item.parent.remove_widget(parent_item)
         show_snackbar("Iten excluído!")
 
     def delete_item_2(self, ean):
         user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
-        self.db.child("precos").child(ean).remove(user['idToken'])
+        self.db.child(self.setor).child("precos").child(ean).remove(user['idToken'])
         file_path = os.path.join(os.getcwd(), "prices", ean  + '.png')
         os.remove(file_path)
         show_snackbar("Itens excluídos!")
@@ -652,7 +689,7 @@ class InventApp(MDApp):
     def delete_item_abastecimento(self, button):
         ean = button.ean
         user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
-        self.db.child("abastecimento").child(ean).remove(user['idToken'])
+        self.db.child(self.setor).child("abastecimento").child(ean).remove(user['idToken'])
         parent_item = button.parent.parent
         parent_item.parent.remove_widget(parent_item)
 

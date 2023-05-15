@@ -26,16 +26,19 @@ def verifica_dados_firebase(self, user, password, logado_antes=False):
                 name = user_data['name']
                 birth = user_data['birth']
                 pnum = user_data['pnum']
+                setor = user_data['setor']
                 dados_login = {'nome_de_usuario': nome_de_usuario, 
                             'email': user, 
                             'senha': password,
                             'nome': name,
                             'nasc': birth,
-                            'pnum': pnum}
+                            'pnum': pnum,
+                            'setor': setor}
                 with open('dados_login.json', 'w') as f:
                     json.dump(dados_login, f)   
                 self.root.current = "main"
                 self.usuario_logado = nome_de_usuario
+                self.setor = setor
         except Exception:
             self.show_alert_login()
         else:
@@ -49,11 +52,13 @@ def atualiza_dados_app(self):
     self.mail = dados_login['email']
     self.nasc = dados_login['nasc']
     self.pnum = dados_login['pnum']
+    self.setor = dados_login['setor']
     self.root.get_screen('main').ids.username.text = f"{self.user}"
     self.root.get_screen('main').ids.mail.text = f"{self.mail}"
     self.root.get_screen('main').ids.pnum.text = f"{self.pnum}"
     self.root.get_screen('main').ids.birth.text = f"{self.nasc}"
     self.root.get_screen('main').ids.name.text = f"{self.nam}"
+    self.root.get_screen('main').ids.setor.text = f"{self.setor}"
 
 def limpar_dados_login():
     with open('dados_login.json', 'w') as f:

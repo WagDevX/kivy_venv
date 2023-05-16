@@ -20,7 +20,7 @@ from tarefas import inicia_tarefas_firebase, finaliza_tarefas_firebase,envia_tar
 from kivymd.font_definitions import theme_font_styles
 import pyrebase
 import json
-from kivy.properties import StringProperty, BooleanProperty
+from kivy.properties import StringProperty, BooleanProperty, NumericProperty
 from kivy.core.text import LabelBase
 from kivy.clock import mainthread
 from kivymd.uix.card import MDCardSwipe
@@ -34,6 +34,7 @@ from barcode.writer import ImageWriter
 import barcode
 from kivy.uix.image import Image
 from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.gridlayout import MDGridLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.utils import get_color_from_hex
 from kivy.animation import Animation
@@ -62,6 +63,12 @@ class ClickableTextFieldRound(MDRelativeLayout):
     id = StringProperty()
 
 class TypeMapElement(MDBoxLayout):
+    cols = NumericProperty()
+    selected = BooleanProperty(False)
+    icon = StringProperty()
+    title = StringProperty()
+
+class TypeMapElement2(MDBoxLayout):
     selected = BooleanProperty(False)
     icon = StringProperty()
     title = StringProperty()
@@ -168,8 +175,10 @@ class Principal(Screen):
         if key in self.widgets:
             tasks_layout = self.ids.tasks_ongoing
             tasks_layout2 = self.ids.tasks
+            tasks_layout3 = self.ids.tasks_finished
             tasks_layout.remove_widget(self.widgets[key])
             tasks_layout2.remove_widget(self.widgets[key])
+            tasks_layout3.remove_widget(self.widgets[key])
 
         card = MD3Card(
             md_bg_color=prio,
@@ -379,11 +388,11 @@ class InventApp(MDApp):
     def on_stop(self):
         Principal.close_stream
         
-    def set_active_element(self, instance, type_map):
-        for element in self.root.get_screen('cadastro').ids.content_container.children:
+    def set_active_element(self, instance, setor_escolhido):
+        for element in self.root.get_screen('cadastro').ids.grid_container.children:
             if instance == element:
                 element.selected = True
-                self.root.get_screen('cadastro').ids.setor.text = type_map
+                self.root.get_screen('cadastro').ids.setor.text = setor_escolhido
             else:
                 element.selected = False    
     

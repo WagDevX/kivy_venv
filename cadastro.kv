@@ -84,7 +84,7 @@ Telacadastro:
         shadow_softness: 6
         bg_color: "white"
         type: "standard"
-        max_opening_height: self.height
+        max_opening_height: self.height 
         default_opening_height: self.max_opening_height
         adaptive_height: True
 
@@ -95,6 +95,7 @@ Telacadastro:
                 text: "Selecione o setor"
                 adaptive_height: True
                 bold: True
+                halign: 'center'
                 pos_hint: {"center_y": .5}
 
             MDBottomSheetDragHandleButton:
@@ -105,28 +106,35 @@ Telacadastro:
         MDBottomSheetContent:
             id: content_container
             padding: 0, 0, 0, "16dp"
-            TypeMapElement
-                title: 'Racao'
-                icon: 'dog-service'
-            TypeMapElement
-                title: 'Aquario'
-                icon: 'fishbowl'
-            TypeMapElement
-                title: 'Aves'
-                icon: 'bird'
-            TypeMapElement
-                title: 'Caixa'
-                icon: 'cash-register'
-            TypeMapElement
-                title: 'Acessórios'
-                icon: 'bone'
-            TypeMapElement
-                title: 'Jardim'
-                icon: 'flower'
-            TypeMapElement
-                title: 'Omni'
-                icon: 'cart-variant'
-
+            MDGridLayout:
+                id: grid_container
+                cols: 4
+                spacing: "5dp"
+                adaptive_height: True
+                TypeMapElement
+                    title: 'Racao'
+                    icon: 'food-drumstick'
+                TypeMapElement
+                    title: 'Aquario'
+                    icon: 'fishbowl'
+                TypeMapElement
+                    title: 'Aves'
+                    icon: 'bird'
+                TypeMapElement
+                    title: 'Caixa'
+                    icon: 'cash-register'
+                TypeMapElement
+                    title: 'Acessórios'
+                    icon: 'bone'
+                TypeMapElement
+                    title: 'Jardinagem'
+                    icon: 'flower'
+                TypeMapElement
+                    title: 'Omni'
+                    icon: 'web'
+                TypeMapElement
+                    title: 'Farmácia'
+                    icon: 'pill'
 
 <TypeMapElement>
     orientation: "vertical"

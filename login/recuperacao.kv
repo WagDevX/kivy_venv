@@ -1,0 +1,27 @@
+MDScreen:
+    name: 'tela_recuperacao'
+    FloatLayout:
+        MDIconButton:
+            icon: "arrow-collapse-left"
+            pos_hint: {"center_y": .95}
+            user_font_size: "30sp"
+            on_press:
+                root.manager.transition.direction = "right"
+                root.manager.current = "login"
+        CampoDados:
+            id: mail_rec
+            validator: "email"
+            hint_text: "e-mail"
+            icon_right: "mail"
+            helper_text_mode: "persistent"
+            helper_text:"Email para receber link de recuperação"
+            font_size: "18sp"
+            pos_hint: {'center_x': 0.5, 'center_y': 0.53}
+        MDFillRoundFlatButton:
+            font_name: 'Kumbh'
+            id: botao_logar
+            text: "ENVIAR"
+            size_hint_x:"0.8"
+            pos_hint: {'center_x': 0.5, 'center_y': 0.43}
+            on_press:
+                app.envia_email_recup_senha(mail_rec.text)

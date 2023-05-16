@@ -1,7 +1,7 @@
 from kivy.lang import Builder
 from kivymd.uix.snackbar import MDSnackbar,MDSnackbarCloseButton
 from kivymd.app import MDApp
-from kivymd.uix.list import TwoLineAvatarIconListItem,OneLineRightIconListItem,IconLeftWidget
+from kivymd.uix.list import TwoLineAvatarIconListItem,IconLeftWidget
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
@@ -20,7 +20,7 @@ from tarefas import inicia_tarefas_firebase, finaliza_tarefas_firebase,envia_tar
 from kivymd.font_definitions import theme_font_styles
 import pyrebase
 import json
-from kivy.properties import StringProperty
+from kivy.properties import StringProperty, BooleanProperty
 from kivy.core.text import LabelBase
 from kivy.clock import mainthread
 from kivymd.uix.card import MDCardSwipe
@@ -33,9 +33,15 @@ import os
 from barcode.writer import ImageWriter
 import barcode
 from kivy.uix.image import Image
+from kivymd.uix.boxlayout import MDBoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.utils import get_color_from_hex
 from kivy.animation import Animation
+from kivy.core.window import Window
+from kivy.clock import Clock
+import threading
+from kivymd.uix.spinner import MDSpinner
+from kivy.metrics import dp
 
 
 
@@ -49,6 +55,16 @@ firebaseConfig = {
     "measurementId": "G-0SRYWQ5YJ3",
     "databaseURL": "https://inventariocob-default-rtdb.firebaseio.com"
   }
+
+class ClickableTextFieldRound(MDRelativeLayout):
+    text = StringProperty()
+    hint_text = StringProperty()
+    id = StringProperty()
+
+class TypeMapElement(MDBoxLayout):
+    selected = BooleanProperty(False)
+    icon = StringProperty()
+    title = StringProperty()
 
 class Telaprice(Screen):
     def on_kv_post(self, base_widget):
@@ -196,6 +212,7 @@ class Principal(Screen):
         layout.add_widget(resp_widget)
 
         task_button = MDRectangleFlatIconButton(
+            font_name = 'Kumbh',
             text=botao,
             icon=ico,
             line_color=(0, 0, 0, 0),
@@ -206,6 +223,7 @@ class Principal(Screen):
         layout.add_widget(task_button)
 
         finish_button = MDRectangleFlatIconButton(
+            font_name = 'Kumbh',
             text=botaof,
             icon=icof,
             line_color=(0, 0, 0, 0),
@@ -253,9 +271,6 @@ class Principal(Screen):
         self.my_stream = self.db.child(setor).child("tasks").stream(self.stream_handler, self.user['idToken'])
     
     def close_stream(self):
-        self.my_stream.close()
-
-    def on_pre_leave(self):
         self.my_stream.close()
 
 class Tarefas(Screen):
@@ -361,9 +376,16 @@ class InventApp(MDApp):
     dialog3 = None
     login_checked = False
         
-
     def on_stop(self):
         Principal.close_stream
+        
+    def set_active_element(self, instance, type_map):
+        for element in self.root.get_screen('cadastro').ids.content_container.children:
+            if instance == element:
+                element.selected = True
+                self.root.get_screen('cadastro').ids.setor.text = type_map
+            else:
+                element.selected = False    
     
     def build(self):
         self.theme_cls.material_style = "M3"
@@ -373,12 +395,17 @@ class InventApp(MDApp):
         self.screen_manager.add_widget(Builder.load_file('login.kv'))
         self.tela_principal =(Builder.load_file('main.kv'))
         self.tela_cadastro = (Builder.load_file('cadastro.kv')) 
+        self.tela_recuperacao = (Builder.load_file('./login/recuperacao.kv')) 
         self.screen_manager.add_widget(Builder.load_file('tarefas.kv'))
         self.tela_prices = (Builder.load_file('./prices/precificacao.kv'))
         self.screen_manager.add_widget(self.tela_cadastro)
         self.screen_manager.add_widget(self.tela_prices)
         self.screen_manager.add_widget(self.tela_principal)
+        self.screen_manager.add_widget(self.tela_recuperacao)
         return self.screen_manager
+    
+    def envia_email_recup_senha(self, email):
+        self.auth.send_password_reset_email(email)
     
     def on_symbols(self,instance,symbols):
         if not symbols == "":
@@ -410,22 +437,34 @@ class InventApp(MDApp):
         celular = self.root.get_screen('cadastro').ids.pnum.text
         email = self.root.get_screen('cadastro').ids.mail.text
         usuario = self.root.get_screen('cadastro').ids.user.text
-        senha = self.root.get_screen('cadastro').ids.password.text
-        confirmar_senha = self.root.get_screen('cadastro').ids.password_confirm.text
+        password_widget = self.root.get_screen('cadastro').ids.password
+        senha = password_widget.ids.text_field.text
+        confirm_password_widget = self.root.get_screen('cadastro').ids.password_confirm
+        confirmar_senha = confirm_password_widget.ids.text_field.text
+        setor = self.root.get_screen('cadastro').ids.setor.text
+        self.root.get_screen('cadastro').ids.botao_cadastrar.disabled = True
+        self.root.get_screen('cadastro').ids.botao_cadastrar.text = 'Cadastrando'
 
         # verificar se todos os campos estão preenchidos
-        if nome == '' or nascimento == '' or celular == '' or email == '' or usuario == '' or senha == '' or confirmar_senha == '':
+        if nome == '' or nascimento == '' or celular == '' or email == '' or usuario == '' or senha == '' or confirmar_senha == '' or setor == '':
             self.show_error_dialog('Todos os campos são obrigatórios!')
+            self.root.get_screen('cadastro').ids.botao_cadastrar.disabled = False
+            self.root.get_screen('cadastro').ids.botao_cadastrar.text = 'Cadastrar'
             return
 
         # verificar se as senhas coincidem
         if senha != confirmar_senha:
             self.show_error_dialog('As senhas digitadas não coincidem!')
+            self.root.get_screen('cadastro').ids.botao_cadastrar.disabled = False
+            self.root.get_screen('cadastro').ids.botao_cadastrar.text = 'Cadastrar'
             return
-
-        # se todos os campos estiverem preenchidos e as senhas coincidirem, enviar dados ao Firebase
-        if self.envia_dados_firebase(nome, email, celular, senha, usuario, nascimento):
-            self.show_snackbar('Cadastrado com sucesso!')
+        
+        def execute_later(dt):
+            if self.envia_dados_firebase(nome, email, celular, senha, usuario, nascimento, setor):
+                self.show_snackbar('Cadastrado com sucesso!')
+            self.root.get_screen('cadastro').ids.botao_cadastrar.disabled = False
+            self.root.get_screen('cadastro').ids.botao_cadastrar.text = 'Cadastrar'
+        Clock.schedule_once(execute_later, 0.5)
 
     def show_error_dialog(self, message):
         dialog = MDDialog(
@@ -477,7 +516,7 @@ class InventApp(MDApp):
                         text="SIM",
                         theme_text_color="Custom",
                         text_color=self.theme_cls.primary_color,
-                        on_press=self.ir_para_login
+                        on_press=self.fazer_log_out
                     ),
                     MDFlatButton(
                         text="NÃO",
@@ -533,21 +572,37 @@ class InventApp(MDApp):
     def fechar_dialogo(self, *args):
         self.dialog.dismiss()
 
-    def ir_para_login(self, *args):
+    def fazer_log_out(self, *args):
         self.root.get_screen('main').ids.tasks.clear_widgets()
+        self.root.get_screen('main').ids.md_list.clear_widgets()
+        self.root.get_screen('main').ids.lista_abastecimento.clear_widgets()
         limpar_dados_login()
         self.dialog.dismiss()
         self.root.current = "login"
         self.root.transition.direction = "right"
 
     def verifica_dados_firebase(self, user, password, logado=False):
-        verifica_dados_firebase(self, user, password, logado_antes=logado)
-        atualiza_dados_app(self)
-        add_abastecimento_firebase(self)
-        self.add_all_items_from_firebase()
+        spinner = MDSpinner(size_hint=(None, None), size=(dp(48), dp(48)),
+                       pos_hint={'center_x': 0.5, 'center_y': .33},
+                       determinate=False,
+                       determinate_time=1)
+        self.root.get_screen('login').ids.login_page.add_widget(spinner)
+        self.root.get_screen('login').ids.botao_logar.disabled = True
+        self.root.get_screen('login').ids.botao_logar.text = 'Aguarde'
+        def execute_later(dt):
+            verifica_dados_firebase(self, user, password, logado_antes=logado)
+            atualiza_dados_app(self)
+            add_abastecimento_firebase(self)
+            self.add_all_items_from_firebase()
+
+            self.root.get_screen('login').ids.login_page.remove_widget(spinner)
+            self.root.get_screen('login').ids.botao_logar.disabled = False
+            self.root.get_screen('login').ids.botao_logar.text = 'Log in'
+
+        Clock.schedule_once(execute_later, 1)
         
-    def envia_dados_firebase(self, nome, mail, pnum, passw, users, birth):
-        if envia_dados_firebase(self, nome, mail, pnum, passw, users, birth):
+    def envia_dados_firebase(self, nome, mail, pnum, passw, users, birth, setor):
+        if envia_dados_firebase(self, nome, mail, pnum, passw, users, birth, setor):
             return True
 
     def on_save(self, instance, value, date_range):
@@ -593,7 +648,7 @@ class InventApp(MDApp):
                         print('widget achado')
                         ean_data = self.db.child(self.setor).child("precos").child(ean).get(user['idToken']).val()
                         nova_qtd = ean_data.get('Quantidade', 0)
-                        item.text = f"QUANTIDADE NECESSÁRIA: {nova_qtd}"
+                        item.text = f"QUANTIDADE: {nova_qtd}"
                         show_snackbar("Quantidade atualizada!")
             else:
                 eani = str(ean)
@@ -611,7 +666,7 @@ class InventApp(MDApp):
                         on_press=self.delete_item,
                         ean=ean
                     ),
-                    text=f"QUANTIDADE NECESSÁRIA: {qtd}",
+                    text=f"QUANTIDADE: {qtd}",
                     secondary_text = f"Usuário: {self.usuario_logado}",
                     font_style = "Subtitle1",
                     _no_ripple_effect = True
@@ -653,7 +708,7 @@ class InventApp(MDApp):
                         ean=ean,
                         on_press=self.delete_item
                     ),
-                    text=f"QUANTIDADE NECESSÁRIA: {qtd}",
+                    text=f"QUANTIDADE: {qtd}",
                     secondary_text = f"Usuário: {user_l}",
                     font_style = "Subtitle1",
                     _no_ripple_effect = True

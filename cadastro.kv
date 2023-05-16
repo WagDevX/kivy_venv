@@ -1,66 +1,150 @@
 Telacadastro:
-    name: "cadastro"       
+    name: "cadastro"
     FloatLayout:
+        id: cadastro_page
         MDIconButton:
             icon: "arrow-collapse-left"
             pos_hint: {"center_y": .95}
             user_font_size: "30sp"
             on_press:
                 root.manager.transition.direction = "right"
-                root.manager.current = "login"        
+                root.manager.current = "login"
         CampoDados:
             id: name
             hint_text: "nome completo"
             icon_right: "account"
             font_size: "18sp"
-            pos_hint: {'center_x': 0.5, 'center_y': 0.83}
+            pos_hint: {'center_x': 0.5, 'center_y': 0.93}
         CampoDados:
             on_touch_down: if self.collide_point(*args[1].pos): app.show_date_picker()
             id: birth
             hint_text: "nascimento dd/mm/yy"
             icon_right: "calendar"
             font_size: "18sp"
-            pos_hint: {'center_x': 0.5, 'center_y': 0.73}
+            pos_hint: {'center_x': 0.5, 'center_y': 0.83}
         CampoDados:
             id: pnum
             hint_text: "celular"
             icon_right: "cellphone"
             size_hint_x: "0.8"
             font_size: "18sp"
-            pos_hint: {'center_x': 0.5, 'center_y': 0.63}
+            pos_hint: {'center_x': 0.5, 'center_y': 0.73}
         CampoDados:
             id: mail
             validator: "email"
             hint_text: "e-mail"
             icon_right: "mail"
             font_size: "18sp"
-            pos_hint: {'center_x': 0.5, 'center_y': 0.53}                  
+            pos_hint: {'center_x': 0.5, 'center_y': 0.63}                  
         CampoDados:
             id: user
             hint_text: "nome de usuário"
             icon_right: "account"
             font_size: "18sp"
-            pos_hint: {'center_x': 0.5, 'center_y': 0.43}
+            pos_hint: {'center_x': 0.5, 'center_y': 0.53}
 
-        CampoDados:
+        ClickableTextFieldRound:
+            size_hint_x: 0.8
             id: password
             hint_text: "senha"
-            icon_right: "eye-off"
+            font_size: "18sp"
+            pos_hint: {'center_x': 0.5, 'center_y': 0.43}
+            password: True
+
+        ClickableTextFieldRound:
+            size_hint_x: 0.8
+            id: password_confirm
+            hint_text: "confirme sua senha"
             font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.33}
             password: True
+
         CampoDados:
-            id: password_confirm
-            hint_text: "coonfirme sua senha"
-            icon_right: "eye-off"
+            disabled: 'True'
+            on_touch_down: if self.collide_point(*args[1].pos): setores.open()
+            id: setor
+            hint_text: "Setor"
+            icon_right: 'account-child'
             font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.23}
-            password: True
+
         MDFillRoundFlatButton:
-            text: "CADASTRAR"
+            font_name: 'Kumbh'
+            id: botao_cadastrar
+            text: "Cadastrar"
             font_size: "25sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.13}
             on_press: app.verifica_campos_cadastro()
         Widget:
             size_hint_y: None
             height: 10
+    MDBottomSheet:
+        id: setores
+        elevation: 2
+        shadow_softness: 6
+        bg_color: "white"
+        type: "standard"
+        max_opening_height: self.height
+        default_opening_height: self.max_opening_height
+        adaptive_height: True
+
+        MDBottomSheetDragHandle:
+            drag_handle_color: "grey"
+
+            MDBottomSheetDragHandleTitle:
+                text: "Selecione o setor"
+                adaptive_height: True
+                bold: True
+                pos_hint: {"center_y": .5}
+
+            MDBottomSheetDragHandleButton:
+                icon: "close"
+                _no_ripple_effect: True
+                on_release: setores.dismiss()
+
+        MDBottomSheetContent:
+            id: content_container
+            padding: 0, 0, 0, "16dp"
+            TypeMapElement
+                title: 'Racao'
+                icon: 'dog-service'
+            TypeMapElement
+                title: 'Aquario'
+                icon: 'fishbowl'
+            TypeMapElement
+                title: 'Aves'
+                icon: 'bird'
+            TypeMapElement
+                title: 'Caixa'
+                icon: 'cash-register'
+            TypeMapElement
+                title: 'Acessórios'
+                icon: 'bone'
+            TypeMapElement
+                title: 'Jardim'
+                icon: 'flower'
+            TypeMapElement
+                title: 'Omni'
+                icon: 'cart-variant'
+
+
+<TypeMapElement>
+    orientation: "vertical"
+    adaptive_height: True
+    spacing: "2dp"
+
+    MDIconButton:
+        id: icon
+        icon: root.icon
+        md_bg_color: "#EDF1F9" if not root.selected else app.theme_cls.primary_color
+        pos_hint: {"center_x": .5}
+        theme_icon_color: "Custom"
+        icon_color: "white" if root.selected else "black"
+        on_release: app.set_active_element(root, root.title)
+
+    MDLabel:
+        font_size: "14sp"
+        text: root.title
+        pos_hint: {"center_x": .5}
+        halign: "center"
+        adaptive_height: True

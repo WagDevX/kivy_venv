@@ -12,6 +12,7 @@ Principal:
         selected_color_background: 0, 0, 0, 0
 
         MDBottomNavigationItem:
+            font_name: 'Kumbh'
             id: nav
             name: 'screen 1'
             text: 'Home'
@@ -21,6 +22,7 @@ Principal:
                 MDTabs:
                     id: tabs
                     Tab:
+                        font_name: 'Kumbh'
                         title: "Tarefas disponíveis"
                         icon: "format-list-numbered"
                         MDScrollView:
@@ -46,6 +48,7 @@ Principal:
                                     root.manager.current = "tasks_send"
                                     app.screen_manager.transition = SlideTransition()
                     Tab:
+                        font_name: 'Kumbh'
                         title: "Iniciadas"
                         icon:"clock-check"
                         MDScrollView:
@@ -58,6 +61,7 @@ Principal:
                                 height: self.minimum_height
                                 on_minimum_height: self.height = self.minimum_height
                     Tab:
+                        font_name: 'Kumbh'
                         title: "Finalizadas"
                         icon: "check-all"
                         MDScrollView:
@@ -73,12 +77,14 @@ Principal:
                 
 
         MDBottomNavigationItem:
+            font_name: 'Kumbh'
             name: 'screen 2'
             text: 'Busca'
             icon: 'book-search'
 
             ScreenListItems
         MDBottomNavigationItem:
+            font_name: 'Kumbh'
             name: 'screen 3'
             text: 'Diário'
             icon: "book-information-variant"
@@ -87,6 +93,7 @@ Principal:
                 MDTabs:
                     id: tabs
                     Tab:
+                        font_name: 'Kumbh'
                         title: "PRECIFICAÇÃO"
                         icon: "printer-check"
                         MDBoxLayout:
@@ -131,6 +138,7 @@ Principal:
                                 icon_size: "40sp"
                                 on_press: if app.add_all_items_from_firebase(): show_snackbar("Atualizado!")
                     Tab:
+                        font_name: 'Kumbh'
                         title: "ABASTECIMENTO"
                         icon: "pickaxe"
                         MDScrollView:
@@ -150,6 +158,7 @@ Principal:
                                 on_press: app.add_abastecimento_firebase()
 
         MDBottomNavigationItem:
+            font_name: 'Kumbh'
             name: 'screen 4'
             text: 'Perfil'
             icon: "account-box"
@@ -158,6 +167,7 @@ Principal:
                 MDTabs:
                     id: tabs
                     Tab:
+                        font_name: 'Kumbh'
                         title: "Meus dados"
                         icon: "account-box"
                         FloatLayout:
@@ -206,6 +216,7 @@ Principal:
                                 icon_right: "account"
                                 pos_hint: {'center_x': 0.5, 'center_y': 0.25}
                             MDRectangleFlatIconButton:
+                                font_name: 'Kumbh'
                                 font_size: "30sp"
                                 line_color: 0, 0, 0, 0
                                 text: "DESLOGAR"
@@ -217,6 +228,7 @@ Principal:
                     Tab:
                         title: "Configurações"
                         icon: "account-settings"
+                        font_name: 'Kumbh'
                         MDFloatLayout:
                             MDSwitch:
                                 pos_hint: {'center_x': .5, 'center_y': .5}
@@ -245,11 +257,13 @@ Principal:
                 height: self.minimum_height
                 orientation: 'vertical'
 <ListaItemsComImg>:
+    font_name: 'Kumbh'
     text: "DUAS LINHAS COM AVATAR"
     secondary_text: "SEGUNDA LINHA AQUI"
     on_press: app.dialogo_adiciona_item_da_lista(self.text, 1, self.secondary_text)
 
 <CampoPesquisa@MDTextField>:
+    font_name: 'Kumbh'
     mode: "fill"
     font_size: '20sp'
     normal_color: app.theme_cls.primary_dark
@@ -271,6 +285,7 @@ Principal:
         hint_text: "Descrição"
 
 <CampoDados@MDTextField>:
+    font_name: 'Kumbh'
     size_hint_x: "0.8"
     font_size: "18sp"
 
@@ -281,18 +296,6 @@ Principal:
     size_hint: 1, None
     style: "outlined" 
     radius: [10,10,10,10]
-
-<SwipeToDeleteItem>
-    on_swipe_complete: app.on_swipe_complete(root)
-    size_hint_y: None
-    height: content.height
-
-    MDCardSwipeFrontBox:
-        # Content of card.
-        OneLineListItem:
-            id: content
-            text: root.text
-            _no_ripple_effect: True
 
 <MD4Card>
     line_color: 0.1, 0.9, 0.9, 0.8

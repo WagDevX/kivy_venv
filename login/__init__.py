@@ -1,6 +1,9 @@
 import json
 import pyrebase
 
+
+
+
 firebaseConfig = {
     "apiKey": "AIzaSyCvJ9mXa6vY6EwPiXOY1o7KjMye22k0OJA",
     "authDomain": "inventariocob.firebaseapp.com",

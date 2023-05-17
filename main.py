@@ -34,15 +34,15 @@ from barcode.writer import ImageWriter
 import barcode
 from kivy.uix.image import Image
 from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.gridlayout import MDGridLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.utils import get_color_from_hex
 from kivy.animation import Animation
 from kivy.core.window import Window
 from kivy.clock import Clock
-import threading
 from kivymd.uix.spinner import MDSpinner
 from kivy.metrics import dp
+from kivymd.uix.datatables import MDDataTable
+from kivy.app import App
 
 
 
@@ -56,6 +56,57 @@ firebaseConfig = {
     "measurementId": "G-0SRYWQ5YJ3",
     "databaseURL": "https://inventariocob-default-rtdb.firebaseio.com"
   }
+class FValidade(Screen):
+    pass
+
+class Validade(Screen):
+     def on_enter(self):
+        app = App.get_running_app()
+        setor = app.setor
+        try:
+            firebase = pyrebase.initialize_app(firebaseConfig)
+            auth = firebase.auth()
+            db = firebase.database()
+            user = auth.sign_in_with_email_and_password("admin@admin.com", "123456")
+            validades = db.child(setor).child("validade").get(user['idToken']).val()
+            
+            # Formatar os dados para a estrutura row_data
+            row_data = []
+            index = 1
+            for key, value in validades.items():
+                cod = value.get("COD", "")
+                desc = value.get("Descricao", "")
+                curva = value.get("Curva", "")
+                qtd = value.get("QTD", "")
+                vencimento = value.get("Data_vencimento", "")
+                
+                row = (str(index), cod, desc, curva, qtd, vencimento)
+                row_data.append(row)
+                index += 1
+            
+            # Criar a tabela com os dados formatados
+            self.data_tables = MDDataTable(
+                size_hint=(0.9, 0.9),
+                use_pagination=True,
+                check=True,
+                shadow_softness_size=2,
+                column_data=[
+                    ("No.", dp(20), None, "Custom tooltip"),
+                    ("COD", dp(20)),
+                    ("DESCRIÇÃO", dp(40)),
+                    ("CURVA", dp(20)),
+                    ("QTD", dp(20)),
+                    ("VENC", dp(20)),
+                ],
+                row_data=row_data,
+            )
+            
+            # Adicionar a tabela ao widget pai
+            self.ids.lista_validade.add_widget(self.data_tables)
+            
+        except Exception:
+            texto = "Erro ao carregar as validades!"
+            show_snackbar(texto)
 
 class ClickableTextFieldRound(MDRelativeLayout):
     text = StringProperty()
@@ -64,11 +115,6 @@ class ClickableTextFieldRound(MDRelativeLayout):
 
 class TypeMapElement(MDBoxLayout):
     cols = NumericProperty()
-    selected = BooleanProperty(False)
-    icon = StringProperty()
-    title = StringProperty()
-
-class TypeMapElement2(MDBoxLayout):
     selected = BooleanProperty(False)
     icon = StringProperty()
     title = StringProperty()
@@ -276,8 +322,11 @@ class Principal(Screen):
     user = auth.sign_in_with_email_and_password("admin@admin.com", "123456") 
 
     def on_enter(self, *args):
-        setor = self.ids.setor.text
-        self.my_stream = self.db.child(setor).child("tasks").stream(self.stream_handler, self.user['idToken'])
+        
+        if not hasattr(self, 'stream_executed'):
+            setor = self.ids.setor.text
+            self.my_stream = self.db.child(setor).child("tasks").stream(self.stream_handler, self.user['idToken'])
+            self.stream_executed = True
     
     def close_stream(self):
         self.my_stream.close()
@@ -407,12 +456,20 @@ class InventApp(MDApp):
         self.tela_recuperacao = (Builder.load_file('./login/recuperacao.kv')) 
         self.screen_manager.add_widget(Builder.load_file('tarefas.kv'))
         self.tela_prices = (Builder.load_file('./prices/precificacao.kv'))
+        self.tela_validade = (Builder.load_file('./validade/validade.kv'))
+        self.tela_fazer_validade = (Builder.load_file('./validade/fazer_validade.kv'))
         self.screen_manager.add_widget(self.tela_cadastro)
         self.screen_manager.add_widget(self.tela_prices)
         self.screen_manager.add_widget(self.tela_principal)
         self.screen_manager.add_widget(self.tela_recuperacao)
+        self.screen_manager.add_widget(self.tela_validade)
+        self.screen_manager.add_widget(self.tela_fazer_validade)
         return self.screen_manager
     
+    def go_to_main_screen(self):
+        self.root.transition.direction = "right"
+        self.root.current = "main"
+
     def envia_email_recup_senha(self, email):
         self.auth.send_password_reset_email(email)
     
@@ -743,12 +800,18 @@ class InventApp(MDApp):
         parent_item.parent.remove_widget(parent_item)
         show_snackbar("Iten excluído!")
 
-    def delete_item_2(self, ean):
-        user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
-        self.db.child(self.setor).child("precos").child(ean).remove(user['idToken'])
-        file_path = os.path.join(os.getcwd(), "prices", ean  + '.png')
-        os.remove(file_path)
-        show_snackbar("Itens excluídos!")
+    def delete_item_2(self, eans):
+        try:
+            user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
+            updates = {}
+            for ean in eans:
+                updates[ean] = None
+                file_path = os.path.join(os.getcwd(), "prices", ean  + '.png')
+                os.remove(file_path)
+            self.db.child(self.setor).child("precos").update(updates, user['idToken'])
+            show_snackbar("Itens excluídos!")
+        except Exception:
+            pass
 
     def delete_item_abastecimento(self, button):
         ean = button.ean
@@ -759,13 +822,18 @@ class InventApp(MDApp):
 
     def delete_selected_item(self, instance):
         selection_list = self.root.get_screen('main').ids.md_list
+        self.root.get_screen('main').ids.toolbar.right_action_items = [["dots-horizontal-circle"], ["dots-vertical"]]
+        self.root.get_screen('main').ids.toolbar.right_action_items.disabled = True
         selected_items = selection_list.get_selected_list_items()
+        self.root.get_screen('main').ids.toolbar.title =f"Excluindo {len(selected_items)} itens, aguarde"
 
-        for item in selected_items:
-            selection_list.remove_widget(item)
-            ean = item.children[1].id
-            self.delete_item_2(ean)
-        self.root.get_screen('main').ids.md_list.unselected_all()
+        def execute_later(dt):
+            for item in selected_items:
+                selection_list.remove_widget(item)
+            eans = [item.children[1].id for item in selected_items]
+            self.delete_item_2(eans)
+            self.root.get_screen('main').ids.md_list.unselected_all()
+        Clock.schedule_once(execute_later, 1)
 
     def set_selection_mode(self, instance_selection_list, mode):
         if mode:

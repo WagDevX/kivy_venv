@@ -1,0 +1,65 @@
+#:import envia_validade_firebase validade.envia_validade_firebase
+
+FValidade:
+    name: "fazer_validade"
+    FloatLayout:
+        id: campos_fazer_validade
+        MDIconButton:
+            icon: "arrow-collapse-left"
+            pos_hint: {"center_y": .95}
+            user_font_size: "30sp"
+            on_press:
+                root.manager.transition.direction = "right"
+                root.manager.current = "main"
+        CampoDados:
+            id: ean_ou_in
+            hint_text: "COD EAN ou IN"
+            icon_right: 'format-list-numbered'
+            font_size: "18sp"
+            pos_hint: {'center_x': 0.5, 'center_y': 0.75}
+        CampoDados:
+            id: val_desc
+            hint_text: "Descrição"
+            icon_right: "list-status"
+            font_size: "18sp"
+            pos_hint: {'center_x': 0.5, 'center_y': 0.65}
+        CampoDados:
+            id: val_curva
+            hint_text: "Curva"
+            icon_right: 'sale'
+            size_hint_x: "0.8"
+            font_size: "18sp"
+            pos_hint: {'center_x': 0.5, 'center_y': 0.55}
+        CampoDados:
+            id: val_qtd
+            hint_text: "Quantidade"
+            icon_right: 'counter'
+            size_hint_x: "0.8"
+            font_size: "18sp"
+            pos_hint: {'center_x': 0.5, 'center_y': 0.45}
+        CampoDados:
+            #on_touch_down: if self.collide_point(*args[1].pos): app.show_date_picker()
+            id: data_vencimento
+            hint_text: "Vencimento dd/mm/yy"
+            icon_right: "calendar"
+            font_size: "18sp"
+            pos_hint: {'center_x': 0.5, 'center_y': 0.35}                  
+        MDRectangleFlatIconButton:
+            id: botao_enviar_validade
+            fonte_name: "Kumbh"
+            font_size: "25sp"
+            line_color: 0, 0, 0, 0
+            text: "EXPORTAR"
+            icon: "plus-box-multiple-outline"
+            line_color: 0, 0, 0, 0
+            pos_hint: {"center_x": .5, "center_y": .15}
+            on_press:
+                envia_validade_firebase(ean_ou_in.text, val_desc.text, val_curva.text, val_qtd.text, data_vencimento.text, app.usuario_logado, app.setor)
+                ean_ou_in.text = ""
+                val_desc.text = ""
+                val_curva.text = ""
+                val_qtd.text = ""
+                data_vencimento.text = ""
+        Widget:
+            size_hint_y: None
+            height: 10

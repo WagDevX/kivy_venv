@@ -156,7 +156,31 @@ Principal:
                                 icon: "refresh-circle"
                                 icon_size: "40sp"
                                 on_press: app.add_abastecimento_firebase()
-
+                    Tab:
+                        font_name: 'Kumbh'
+                        title: "VALIDADE"
+                        icon: 'calendar-end'
+                        FloatLayout:
+                            MDFillRoundFlatButton:
+                                font_name: 'Kumbh'
+                                id: botao_ver_lista
+                                text: "VER LISTA"
+                                size_hint_x:"0.8"
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.83}
+                                on_press:
+                                    root.manager.transition = SwapTransition()
+                                    root.manager.current = "tela_validade"
+                                    app.screen_manager.transition = SlideTransition()
+                            MDFillRoundFlatButton:
+                                font_name: 'Kumbh'
+                                id: botao_fazer_validade
+                                text: "FAZER VALIDADE"
+                                size_hint_x:"0.8"
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.73}
+                                on_press:
+                                    root.manager.transition = SwapTransition()
+                                    root.manager.current = "fazer_validade"
+                                    app.screen_manager.transition = SlideTransition()
         MDBottomNavigationItem:
             font_name: 'Kumbh'
             name: 'screen 4'

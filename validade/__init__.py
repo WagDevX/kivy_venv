@@ -2,6 +2,16 @@
 import pyrebase
 import datetime
 from tarefas import show_snackbar
+import openpyxl
+from pathlib import Path
+import os
+import ezodf
+from kivy.utils import platform
+if platform =='android':
+    from jnius import autoclass
+
+
+
 
 firebaseConfig = {
     "apiKey": "AIzaSyCvJ9mXa6vY6EwPiXOY1o7KjMye22k0OJA",
@@ -32,10 +42,51 @@ def envia_validade_firebase(cod, desc, curva, qtd, vencimento, resp, setor):
                     }
             db.child(setor).child("validade").push(data, user['idToken'])
         except Exception:
-            texto = "Erro ao adicionar validade!"
+            texto = "Erro ao exportar validade!"
             show_snackbar(texto)
         else:
-            texto = "Adicionado com sucesso!"
+            texto = "Exportado com sucesso!"
             show_snackbar(texto)
             return True
-        
+def adiciona_validade_da_busca(self, cod, desc):
+     self.root.get_screen('fazer_validade').ids.ean_ou_in.text = cod
+     self.root.get_screen('fazer_validade').ids.val_desc.text = desc
+     self.root.current = 'fazer_validade'
+
+
+def cria_arquivo_openoffice(data_table):
+    # Criar um novo documento ODS
+    doc = ezodf.newdoc(doctype='ods')
+
+
+    # Adicionar uma planilha vazia
+    sheet = ezodf.Sheet('Sheet 1')
+    doc.sheets.append(sheet)
+
+    # Escrever cabeçalho
+    headers = data_table.column_data
+    for col, header in enumerate(headers, 1):
+        sheet[0, col-1].set_value(header[0])
+
+    # Escrever dados
+    row_data = data_table.row_data
+    for row, data in enumerate(row_data, 1):
+        for col, value in enumerate(data, 1):
+            sheet[row, col-1].set_value(value)
+
+    # Obter pasta de downloads do usuário
+    if platform == 'android':
+        from jnius import autoclass
+        Environment = autoclass('android.os.Environment')
+        downloads_folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath()
+    else:
+        downloads_folder = os.path.join(os.path.expanduser("~"), "Downloads")
+
+    # Salvar arquivo
+    agora = datetime.datetime.now()
+    agora_sem_milissegundos = agora.strftime("%d-%m-%y")
+    filename = os.path.join(downloads_folder, f"Validade-{agora_sem_milissegundos}.ods")
+    doc.saveas(str(filename))
+
+
+    return filename

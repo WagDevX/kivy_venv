@@ -16,6 +16,9 @@ firebaseConfig = {
   }
 
 def verifica_dados_firebase(self, user, password, logado_antes=False):
+        if logado_antes:
+            self.root.current = "main"
+            return
         firebase = pyrebase.initialize_app(firebaseConfig)
         auth = firebase.auth()
         db = firebase.database()
@@ -40,8 +43,6 @@ def verifica_dados_firebase(self, user, password, logado_antes=False):
                 with open('dados_login.json', 'w') as f:
                     json.dump(dados_login, f)   
                 self.root.current = "main"
-                self.usuario_logado = nome_de_usuario
-                self.setor = setor
         except Exception:
             self.show_alert_login()
         else:
@@ -56,6 +57,8 @@ def atualiza_dados_app(self):
     self.nasc = dados_login['nasc']
     self.pnum = dados_login['pnum']
     self.setor = dados_login['setor']
+    self.usuario_logado = self.user
+    self.setor = self.setor
     self.root.get_screen('main').ids.username.text = f"{self.user}"
     self.root.get_screen('main').ids.mail.text = f"{self.mail}"
     self.root.get_screen('main').ids.pnum.text = f"{self.pnum}"

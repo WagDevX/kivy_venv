@@ -28,6 +28,7 @@ from time import sleep
 from kivy_garden.zbarcam import ZBarCam
 from tarefas import show_snackbar
 from prices import abastecimento, add_abastecimento_firebase, is_valid_ean
+from validade import adiciona_validade_da_busca, cria_arquivo_openoffice
 from kivy.utils import platform
 import os
 from barcode.writer import ImageWriter
@@ -43,7 +44,10 @@ from kivymd.uix.spinner import MDSpinner
 from kivy.metrics import dp
 from kivymd.uix.datatables import MDDataTable
 from kivy.app import App
-
+from kivymd.uix.menu import MDDropdownMenu
+from pyzbar.pyzbar import ZBarSymbol
+from pyzbar.pyzbar import decode
+from playsound import playsound
 
 
 firebaseConfig = {
@@ -58,55 +62,52 @@ firebaseConfig = {
   }
 class FValidade(Screen):
     pass
-
 class Validade(Screen):
-     def on_enter(self):
+    data_tables = dict()
+    def on_enter(self):
         app = App.get_running_app()
         setor = app.setor
-        try:
-            firebase = pyrebase.initialize_app(firebaseConfig)
-            auth = firebase.auth()
-            db = firebase.database()
-            user = auth.sign_in_with_email_and_password("admin@admin.com", "123456")
-            validades = db.child(setor).child("validade").get(user['idToken']).val()
+        #try:
+        firebase = pyrebase.initialize_app(firebaseConfig)
+        auth = firebase.auth()
+        db = firebase.database()
+        user = auth.sign_in_with_email_and_password("admin@admin.com", "123456")
+        validades = db.child(setor).child("validade").get(user['idToken']).val()
+        
+        row_data = []
+        index = 1
+        for key, value in validades.items():
+            cod = value.get("COD", "")
+            desc = value.get("Descricao", "")
+            curva = value.get("Curva", "")
+            qtd = value.get("QTD", "")
+            vencimento = value.get("Data_vencimento", "")
             
-            # Formatar os dados para a estrutura row_data
-            row_data = []
-            index = 1
-            for key, value in validades.items():
-                cod = value.get("COD", "")
-                desc = value.get("Descricao", "")
-                curva = value.get("Curva", "")
-                qtd = value.get("QTD", "")
-                vencimento = value.get("Data_vencimento", "")
+            row = (str(index), cod, desc, curva, qtd, vencimento)
+            row_data.append(row)
+            index += 1
+
+        self.data_tables = MDDataTable(
+            size_hint=(0.9, 0.9),
+            use_pagination=True,
+            check=True,
+            shadow_softness_size=2,
+            column_data=[
+                ("No.", dp(20), None, "Custom tooltip"),
+                ("COD", dp(20)),
+                ("DESCRIÇÃO", dp(40)),
+                ("CURVA", dp(20)),
+                ("QTD", dp(20)),
+                ("VENC", dp(20)),
+            ],
+            row_data=row_data,
+        )
+        self.data_tables = self.data_tables
+        self.ids.lista_validade.add_widget(self.data_tables)
                 
-                row = (str(index), cod, desc, curva, qtd, vencimento)
-                row_data.append(row)
-                index += 1
-            
-            # Criar a tabela com os dados formatados
-            self.data_tables = MDDataTable(
-                size_hint=(0.9, 0.9),
-                use_pagination=True,
-                check=True,
-                shadow_softness_size=2,
-                column_data=[
-                    ("No.", dp(20), None, "Custom tooltip"),
-                    ("COD", dp(20)),
-                    ("DESCRIÇÃO", dp(40)),
-                    ("CURVA", dp(20)),
-                    ("QTD", dp(20)),
-                    ("VENC", dp(20)),
-                ],
-                row_data=row_data,
-            )
-            
-            # Adicionar a tabela ao widget pai
-            self.ids.lista_validade.add_widget(self.data_tables)
-            
-        except Exception:
-            texto = "Erro ao carregar as validades!"
-            show_snackbar(texto)
+        #except Exception:
+            #texto = "Erro ao carregar as validades!"
+            #show_snackbar(texto)
 
 class ClickableTextFieldRound(MDRelativeLayout):
     text = StringProperty()
@@ -120,12 +121,33 @@ class TypeMapElement(MDBoxLayout):
     title = StringProperty()
 
 class Telaprice(Screen):
-    def on_kv_post(self, base_widget):
-        self.ids.zbarcam.stop()
-    def on_enter(self):
-        self.ids.zbarcam.start()
+
+    def on_pre_enter(self, *args):
+        if not hasattr(self, 'cam_adicionada'):
+            self.zbarcam = ZBarCam(
+                code_types=[ZBarSymbol.QRCODE, ZBarSymbol.EAN13],
+                #on_symbols=partial(self.on_symbols, self),
+            )
+            # Adicione o widget à tela
+            self.zbarcam.bind(symbols=self.on_symbols)
+            self.ids.mybox.add_widget(self.zbarcam)
+            self.cam_adicionada = True
+        else:
+            self.zbarcam.start()
+    
+    def on_symbols(self, instance, symbols):
+        print('funcionando')
+        for symbol in symbols:
+            print(symbol.data.decode())
+        if not symbols == "":
+            for symbol in symbols:
+                self.ids.price_ean.text = symbol.data.decode()
+                playsound("som_de_beep.wav")
+                sleep(1)
+
     def on_leave(self):
-        self.ids.zbarcam.stop()
+        self.zbarcam.stop()
+        
 
 class Principal(Screen):
     widgets = {}
@@ -549,6 +571,11 @@ class InventApp(MDApp):
                     MDFlatButton(
                         text="ABASTECIMENTO", 
                         on_release=lambda *args: abastecimento(self,ean, qtd, desc)
+                    ),
+                    MDFlatButton(
+                        text="VALIDADE", 
+                        on_release=lambda *args: adiciona_validade_da_busca(self,ean,desc),
+                        on_press=lambda *args: confirmation_dialog.dismiss() 
                     ),
                 ],
             )

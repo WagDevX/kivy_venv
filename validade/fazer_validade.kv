@@ -14,11 +14,13 @@ FValidade:
         CampoDados:
             id: ean_ou_in
             hint_text: "COD EAN ou IN"
+            size_hint_x: "0.9"
             icon_right: 'format-list-numbered'
             font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.75}
         CampoDados:
             id: val_desc
+            size_hint_x: "0.9"
             hint_text: "Descrição"
             icon_right: "list-status"
             font_size: "18sp"
@@ -27,21 +29,23 @@ FValidade:
             id: val_curva
             hint_text: "Curva"
             icon_right: 'sale'
-            size_hint_x: "0.8"
+            size_hint_x: "0.9"
             font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.55}
         CampoDados:
             id: val_qtd
             hint_text: "Quantidade"
             icon_right: 'counter'
-            size_hint_x: "0.8"
+            size_hint_x: "0.9"
             font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.45}
         CampoDados:
-            #on_touch_down: if self.collide_point(*args[1].pos): app.show_date_picker()
             id: data_vencimento
-            hint_text: "Vencimento dd/mm/yy"
+            hint_text: "Vencimento dd/mm/aaaa"
+            validator: "date"
             icon_right: "calendar"
+            date_format: "dd/mm/yyyy"
+            size_hint_x: "0.9"
             font_size: "18sp"
             pos_hint: {'center_x': 0.5, 'center_y': 0.35}                  
         MDRectangleFlatIconButton:
@@ -54,7 +58,7 @@ FValidade:
             line_color: 0, 0, 0, 0
             pos_hint: {"center_x": .5, "center_y": .15}
             on_press:
-                envia_validade_firebase(ean_ou_in.text, val_desc.text, val_curva.text, val_qtd.text, data_vencimento.text, app.usuario_logado, app.setor)
+                envia_validade_firebase(ean_ou_in.text, val_desc.text.upper(), val_curva.text.upper(), val_qtd.text, data_vencimento.text, app.usuario_logado, app.setor)
                 ean_ou_in.text = ""
                 val_desc.text = ""
                 val_curva.text = ""

@@ -478,11 +478,11 @@ class InventApp(MDApp):
         self.theme_cls.primary_palette = "Blue"
         self.theme_cls.theme_style = "Light"
         self.screen_manager = ScreenManager()
-        self.screen_manager.add_widget(Builder.load_file('login.kv'))
+        self.screen_manager.add_widget(Builder.load_file('./login/login.kv'))
         self.tela_principal =(Builder.load_file('main.kv'))
-        self.tela_cadastro = (Builder.load_file('cadastro.kv')) 
+        self.tela_cadastro = (Builder.load_file('./cadastro/cadastro.kv')) 
         self.tela_recuperacao = (Builder.load_file('./login/recuperacao.kv')) 
-        self.screen_manager.add_widget(Builder.load_file('tarefas.kv'))
+        self.screen_manager.add_widget(Builder.load_file('./tarefas/tarefas.kv'))
         self.tela_prices = (Builder.load_file('./prices/precificacao.kv'))
         self.tela_validade = (Builder.load_file('./validade/validade.kv'))
         self.tela_fazer_validade = (Builder.load_file('./validade/fazer_validade.kv'))

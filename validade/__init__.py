@@ -2,8 +2,6 @@
 import pyrebase
 import datetime
 from tarefas import show_snackbar
-import openpyxl
-from pathlib import Path
 import os
 import ezodf
 from kivy.utils import platform
@@ -54,13 +52,14 @@ def adiciona_validade_da_busca(self, cod, desc):
      self.root.current = 'fazer_validade'
 
 
-def cria_arquivo_openoffice(data_table):
+
+def save_to_openoffice(data_table, index):
     # Criar um novo documento ODS
     doc = ezodf.newdoc(doctype='ods')
 
 
     # Adicionar uma planilha vazia
-    sheet = ezodf.Sheet('Sheet 1')
+    sheet = ezodf.Sheet('Validade', size = (index, 6))
     doc.sheets.append(sheet)
 
     # Escrever cabeçalho

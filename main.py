@@ -28,7 +28,7 @@ from time import sleep
 from kivy_garden.zbarcam import ZBarCam
 from tarefas import show_snackbar
 from prices import abastecimento, add_abastecimento_firebase, is_valid_ean
-from validade import adiciona_validade_da_busca, cria_arquivo_openoffice
+from validade import adiciona_validade_da_busca
 from kivy.utils import platform
 import os
 from barcode.writer import ImageWriter
@@ -48,6 +48,9 @@ from kivymd.uix.menu import MDDropdownMenu
 from pyzbar.pyzbar import ZBarSymbol
 from pyzbar.pyzbar import decode
 from playsound import playsound
+import ezodf
+import datetime
+
 
 
 firebaseConfig = {
@@ -64,50 +67,53 @@ class FValidade(Screen):
     pass
 class Validade(Screen):
     data_tables = dict()
+    row_data = []
+    num_col = 1
     def on_enter(self):
         app = App.get_running_app()
         setor = app.setor
-        #try:
-        firebase = pyrebase.initialize_app(firebaseConfig)
-        auth = firebase.auth()
-        db = firebase.database()
-        user = auth.sign_in_with_email_and_password("admin@admin.com", "123456")
-        validades = db.child(setor).child("validade").get(user['idToken']).val()
-        
-        row_data = []
-        index = 1
-        for key, value in validades.items():
-            cod = value.get("COD", "")
-            desc = value.get("Descricao", "")
-            curva = value.get("Curva", "")
-            qtd = value.get("QTD", "")
-            vencimento = value.get("Data_vencimento", "")
+        try:
+            firebase = pyrebase.initialize_app(firebaseConfig)
+            auth = firebase.auth()
+            db = firebase.database()
+            user = auth.sign_in_with_email_and_password("admin@admin.com", "123456")
+            validades = db.child(setor).child("validade").get(user['idToken']).val()
             
-            row = (str(index), cod, desc, curva, qtd, vencimento)
-            row_data.append(row)
-            index += 1
-
-        self.data_tables = MDDataTable(
-            size_hint=(0.9, 0.9),
-            use_pagination=True,
-            check=True,
-            shadow_softness_size=2,
-            column_data=[
-                ("No.", dp(20), None, "Custom tooltip"),
-                ("COD", dp(20)),
-                ("DESCRIÇÃO", dp(40)),
-                ("CURVA", dp(20)),
-                ("QTD", dp(20)),
-                ("VENC", dp(20)),
-            ],
-            row_data=row_data,
-        )
-        self.data_tables = self.data_tables
-        self.ids.lista_validade.add_widget(self.data_tables)
+            row_data = []
+            index = 1
+            for key, value in validades.items():
+                cod = value.get("COD", "")
+                desc = value.get("Descricao", "")
+                curva = value.get("Curva", "")
+                qtd = value.get("QTD", "")
+                vencimento = value.get("Data_vencimento", "")
                 
-        #except Exception:
-            #texto = "Erro ao carregar as validades!"
-            #show_snackbar(texto)
+                row = (str(index), cod, desc, curva, qtd, vencimento)
+                row_data.append(row)
+                index += 1
+                self.num_col += 1
+
+            self.data_tables = MDDataTable(
+                size_hint=(0.9, 0.9),
+                use_pagination=True,
+                check=True,
+                shadow_softness_size=2,
+                column_data=[
+                    ("No.", dp(20), None, "Custom tooltip"),
+                    ("COD", dp(20)),
+                    ("DESCRIÇÃO", dp(40)),
+                    ("CURVA", dp(20)),
+                    ("QTD", dp(20)),
+                    ("VENC", dp(20)),
+                ],
+                row_data=row_data,
+            )
+            self.data_tables = self.data_tables
+            self.ids.lista_validade.add_widget(self.data_tables)
+                    
+        except Exception:
+            texto = "Verifique sua conexão!"
+            show_snackbar(texto)
 
 class ClickableTextFieldRound(MDRelativeLayout):
     text = StringProperty()
@@ -487,6 +493,7 @@ class InventApp(MDApp):
         self.screen_manager.add_widget(self.tela_validade)
         self.screen_manager.add_widget(self.tela_fazer_validade)
         return self.screen_manager
+    
     
     def go_to_main_screen(self):
         self.root.transition.direction = "right"

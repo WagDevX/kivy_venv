@@ -1,3 +1,8 @@
+import ctypes, sys
+try:
+    ctypes.pythonapi = ctypes.PyDLL("libpython%d.%d.so" % sys.version_info[:2])
+except Exception:
+    print("ERROR Loading ctypes.DLL")
 from kivy.lang import Builder
 from kivymd.uix.snackbar import MDSnackbar,MDSnackbarCloseButton
 from kivymd.app import MDApp
@@ -47,9 +52,7 @@ from kivy.app import App
 from kivymd.uix.menu import MDDropdownMenu
 from pyzbar.pyzbar import ZBarSymbol
 from pyzbar.pyzbar import decode
-from playsound import playsound
-import ezodf
-import datetime
+from kivy.core.audio import SoundLoader
 
 
 
@@ -148,7 +151,11 @@ class Telaprice(Screen):
         if not symbols == "":
             for symbol in symbols:
                 self.ids.price_ean.text = symbol.data.decode()
-                playsound("som_de_beep.wav")
+                sound = SoundLoader.load("som_de_beep.wav")
+                if sound:
+                    print("Sound found at %s" % sound.source)
+                    print("Sound is %.3f seconds" % sound.length)
+                    sound.play()
                 sleep(1)
 
     def on_leave(self):

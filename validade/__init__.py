@@ -59,7 +59,7 @@ def save_to_openoffice(data_table, index):
 
 
     # Adicionar uma planilha vazia
-    sheet = ezodf.Sheet('Validade', size = (index, 6))
+    sheet = ezodf.Sheet('Validade', size = (index, 8))
     doc.sheets.append(sheet)
 
     # Escrever cabeçalho

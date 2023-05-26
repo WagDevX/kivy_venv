@@ -53,7 +53,7 @@ from kivymd.uix.menu import MDDropdownMenu
 from pyzbar.pyzbar import ZBarSymbol
 from pyzbar.pyzbar import decode
 from kivy.core.audio import SoundLoader
-
+import datetime
 
 
 firebaseConfig = {
@@ -90,11 +90,16 @@ class Validade(Screen):
                 curva = value.get("Curva", "")
                 qtd = value.get("QTD", "")
                 vencimento = value.get("Data_vencimento", "")
-                
-                row = (str(index), cod, desc, curva, qtd, vencimento)
+                resp = value.get("Responsável", "")
+                data_add = value.get("Data_de_adição", "")
+
+                row = (str(index), cod, desc, curva, qtd, vencimento, resp, data_add)
                 row_data.append(row)
                 index += 1
                 self.num_col += 1
+
+            row_data.sort(key=lambda x: datetime.datetime.strptime(x[5], "%d/%m/%Y"))
+            row_data = [(str(i), *row[1:]) for i, row in enumerate(row_data, 1)]
 
             self.data_tables = MDDataTable(
                 size_hint=(0.9, 0.9),
@@ -108,15 +113,22 @@ class Validade(Screen):
                     ("CURVA", dp(20)),
                     ("QTD", dp(20)),
                     ("VENC", dp(20)),
+                    ("RESP", dp(20)),
+                    ("DATA/HR", dp(20)),
                 ],
                 row_data=row_data,
             )
+            self.data_tables.bind(on_row_press=self.on_row_press)
             self.data_tables = self.data_tables
             self.ids.lista_validade.add_widget(self.data_tables)
                     
         except Exception:
             texto = "Verifique sua conexão!"
             show_snackbar(texto)
+    def on_row_press(self, instance_table, instance_row):
+        '''Called when a table row is clicked.'''
+
+        print(instance_table, instance_row)
 
 class ClickableTextFieldRound(MDRelativeLayout):
     text = StringProperty()
@@ -417,18 +429,20 @@ class ScreenListItems(Screen):
     def lista_a_procura(self, text="", search=False):
         self.ids.rv.data = []
 
-        with open('seu_arquivo.json',encoding='utf-8') as f:
+        with open('DADOS_PRODUTOS.json', encoding='utf-8') as f:
             produtos = json.load(f)
+
+        keywords = text.upper().replace('.', '').split()
 
         for ean, produto in produtos.items():
             if search:
-                if text.upper() in produto['descricao'].upper():
+                descricao = produto['descricao'].upper().replace('.', '')
+                if all(keyword in descricao for keyword in keywords):
                     self.ids.rv.data.append(
                         {
                             "source": 'wsol_icon.png',
                             "text": ean,
                             "secondary_text": produto['descricao'],
-                            #"callback": lambda x: x,
                             "secondary_font_style": "Caption",
                             "_txt_left_pad": "2dp",
                         }
@@ -440,7 +454,6 @@ class ScreenListItems(Screen):
                         "text": ean,
                         "secondary_text": produto['descricao'],
                         "callback": lambda x: x,
-
                     }
                 )
 

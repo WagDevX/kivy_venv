@@ -1,3 +1,0 @@
-requirements = python3,kivy==master,kivymd==1.0.2,pyrebase4==4.6.0,requests==2.28.2,requests_toolbelt==0.7.1,gcloud==0.18.3,oauth2client==4.1.2,python-jwt==2.0.1,pycryptodome==3.6.4,urllib3==1.26.15,charset_normalizer==2.1.1,idna==3.4,httplib2==0.22.0,pyparsing==3.0.9,pyasn1==0.4.8,pyasn1_modules==0.2.8,rsa==4.9,pillow
-
-requirements = python3,certifi==2022.12.7,kivy==master,kivymd==1.0.2,pyrebase4==4.6.0,requests==2.28.2,requests_toolbelt==0.7.1,gcloud==0.18.3,oauth2client==4.1.2,python-jwt==2.0.1,pycryptodome==3.6.4,urllib3==1.26.15,charset_normalizer==2.1.1,idna==3.4,httplib2==0.22.0,pyparsing==3.0.9,pyasn1==0.4.8,pyasn1_modules==0.2.8,rsa==4.9,googleapis-common-protos,protobuf,jwcrypto,cryptography,wrapt,jws,pillow

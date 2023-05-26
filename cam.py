@@ -1,95 +1,25 @@
-from kivy.lang import Builder
-from kivy.properties import StringProperty
-from kivy.uix.screenmanager import Screen
+import csv
+import json
 
-from kivymd.icon_definitions import md_icons
-from kivymd.app import MDApp
-from kivymd.uix.list import OneLineIconListItem
+csv_file = 'DADOS PRODUTOS.csv'
+json_file = 'DADOS_PRODUTOS.json'
 
+# Abre o arquivo CSV e cria um leitor CSV
+with open(csv_file, newline='', encoding='latin-1') as f:
+    reader = csv.reader(f)
 
-Builder.load_string(
-    '''
-#:import images_path kivymd.images_path
+    # Cria um dicionário vazio
+    data = {}
 
+    # Loop através de cada linha do CSV
+    for row in reader:
+        # Obtem a chave e a descrição a partir da linha
+        key = row[0]
+        descricao = row[1]
 
-<CustomOneLineIconListItem>
+        # Adiciona a chave e a descrição ao dicionário como um novo item
+        data[key] = {'descricao': descricao}
 
-    IconLeftWidget:
-        icon: root.icon
-
-
-<PreviousMDIcons>
-
-    MDBoxLayout:
-        orientation: 'vertical'
-        spacing: dp(10)
-        padding: dp(20)
-
-        MDBoxLayout:
-            adaptive_height: True
-
-            MDIconButton:
-                icon: 'magnify'
-
-            MDTextField:
-                id: search_field
-                hint_text: 'Search icon'
-                on_text: root.set_list_md_icons(self.text, True)
-
-        RecycleView:
-            id: rv
-            key_viewclass: 'viewclass'
-            key_size: 'height'
-
-            RecycleBoxLayout:
-                padding: dp(10)
-                default_size: None, dp(48)
-                default_size_hint: 1, None
-                size_hint_y: None
-                height: self.minimum_height
-                orientation: 'vertical'
-'''
-)
-
-
-class CustomOneLineIconListItem(OneLineIconListItem):
-    icon = StringProperty()
-
-
-class PreviousMDIcons(Screen):
-
-    def set_list_md_icons(self, text="", search=False):
-        '''Builds a list of icons for the screen MDIcons.'''
-
-        def add_icon_item(name_icon):
-            self.ids.rv.data.append(
-                {
-                    "viewclass": "CustomOneLineIconListItem",
-                    "icon": name_icon,
-                    "text": name_icon,
-                    "callback": lambda x: x,
-                }
-            )
-
-        self.ids.rv.data = []
-        for name_icon in md_icons.keys():
-            if search:
-                if text in name_icon:
-                    add_icon_item(name_icon)
-            else:
-                add_icon_item(name_icon)
-
-
-class MainApp(MDApp):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.screen = PreviousMDIcons()
-
-    def build(self):
-        return self.screen
-
-    def on_start(self):
-        self.screen.set_list_md_icons()
-
-
-MainApp().run()
+# Salva o dicionário como JSON em um arquivo
+with open(json_file, 'w', encoding='utf-8') as f:
+    json.dump(data, f, indent=2, ensure_ascii=False)

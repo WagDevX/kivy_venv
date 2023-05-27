@@ -73,6 +73,7 @@ class FValidade(Screen):
         print(key_data)
         return key_data
 class Validade(Screen):
+    
     right_action_items = ListProperty([])
     selected_row = []
     data_tables = dict()

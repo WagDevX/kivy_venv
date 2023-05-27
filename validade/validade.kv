@@ -8,6 +8,6 @@ Validade:
             id: val_toolbar
             title: "Lista de validade"
             left_action_items: [["arrow-collapse-left", lambda x: app.go_to_main_screen()]]
-            right_action_items: [["download", lambda x: (save_to_openoffice(root.data_tables, root.num_col), show_snackbar("Arquivo salvo em downloads"))]]
+            right_action_items: [["trash-can"],["download", lambda x: (save_to_openoffice(root.data_tables, root.num_col), show_snackbar("Arquivo salvo em downloads"))]] + root.right_action_items
         AnchorLayout:
             id: lista_validade

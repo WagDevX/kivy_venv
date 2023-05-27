@@ -25,7 +25,7 @@ from tarefas import inicia_tarefas_firebase, finaliza_tarefas_firebase,envia_tar
 from kivymd.font_definitions import theme_font_styles
 import pyrebase
 import json
-from kivy.properties import StringProperty, BooleanProperty, NumericProperty
+from kivy.properties import StringProperty, BooleanProperty, NumericProperty, ListProperty
 from kivy.core.text import LabelBase
 from kivy.clock import mainthread
 from kivymd.uix.card import MDCardSwipe
@@ -33,7 +33,7 @@ from time import sleep
 from kivy_garden.zbarcam import ZBarCam
 from tarefas import show_snackbar
 from prices import abastecimento, add_abastecimento_firebase, is_valid_ean
-from validade import adiciona_validade_da_busca
+from validade import adiciona_validade_da_busca, get_node_key
 from kivy.utils import platform
 import os
 from barcode.writer import ImageWriter
@@ -67,68 +67,86 @@ firebaseConfig = {
     "databaseURL": "https://inventariocob-default-rtdb.firebaseio.com"
   }
 class FValidade(Screen):
-    pass
+    def access_key_data(self):
+        validade_screen = self.manager.get_screen("tela_validade")
+        key_data = validade_screen.key_data
+        print(key_data)
+        return key_data
 class Validade(Screen):
+    right_action_items = ListProperty([])
+    selected_row = []
     data_tables = dict()
     row_data = []
+    key_data = []
     num_col = 1
+    setor = None
     def on_enter(self):
         app = App.get_running_app()
-        setor = app.setor
-        try:
-            firebase = pyrebase.initialize_app(firebaseConfig)
-            auth = firebase.auth()
-            db = firebase.database()
-            user = auth.sign_in_with_email_and_password("admin@admin.com", "123456")
-            validades = db.child(setor).child("validade").get(user['idToken']).val()
+        self.setor = app.setor
+        #try:
+        firebase = pyrebase.initialize_app(firebaseConfig)
+        auth = firebase.auth()
+        db = firebase.database()
+        user = auth.sign_in_with_email_and_password("admin@admin.com", "123456")
+        validades = db.child(self.setor).child("validade").get(user['idToken']).val()
+
+        
+        row_data = []
+        index = 1
+        for key, value in validades.items():
+            key = key
+            cod = value.get("COD", "")
+            desc = value.get("Descricao", "")
+            curva = value.get("Curva", "")
+            qtd = value.get("QTD", "")
+            vencimento = value.get("Data_vencimento", "")
+            resp = value.get("Responsável", "")
+            data_add = value.get("Data_de_adição", "")
             
-            row_data = []
-            index = 1
-            for key, value in validades.items():
-                cod = value.get("COD", "")
-                desc = value.get("Descricao", "")
-                curva = value.get("Curva", "")
-                qtd = value.get("QTD", "")
-                vencimento = value.get("Data_vencimento", "")
-                resp = value.get("Responsável", "")
-                data_add = value.get("Data_de_adição", "")
+            row = (str(index), cod, desc, curva, qtd, vencimento, resp, data_add)
+            row_data.append(row)
+            index += 1
+            self.num_col += 1
 
-                row = (str(index), cod, desc, curva, qtd, vencimento, resp, data_add)
-                row_data.append(row)
-                index += 1
-                self.num_col += 1
+        row_data.sort(key=lambda x: datetime.datetime.strptime(x[5], "%d/%m/%Y"))
+        row_data = [(str(i), *row[1:]) for i, row in enumerate(row_data, 1)]
 
-            row_data.sort(key=lambda x: datetime.datetime.strptime(x[5], "%d/%m/%Y"))
-            row_data = [(str(i), *row[1:]) for i, row in enumerate(row_data, 1)]
-
-            self.data_tables = MDDataTable(
-                size_hint=(0.9, 0.9),
-                use_pagination=True,
-                check=True,
-                shadow_softness_size=2,
-                column_data=[
-                    ("No.", dp(20), None, "Custom tooltip"),
-                    ("COD", dp(20)),
-                    ("DESCRIÇÃO", dp(40)),
-                    ("CURVA", dp(20)),
-                    ("QTD", dp(20)),
-                    ("VENC", dp(20)),
-                    ("RESP", dp(20)),
-                    ("DATA/HR", dp(20)),
-                ],
-                row_data=row_data,
-            )
-            self.data_tables.bind(on_row_press=self.on_row_press)
-            self.data_tables = self.data_tables
-            self.ids.lista_validade.add_widget(self.data_tables)
+        self.data_tables = MDDataTable(
+            size_hint=(0.9, 0.9),
+            use_pagination=True,
+            check=True,
+            shadow_softness_size=2,
+            column_data=[
+                ("No.", dp(20), None, "Índice"),
+                ("COD", dp(20), None, "CÓDIGO"),
+                ("DESCRIÇÃO", dp(40)),
+                ("CURVA", dp(20), None, "CURVA DE VENDA"),
+                ("QTD", dp(20), None, "QUANTIDADE"),
+                ("VENC", dp(20), None, "DATA DE VENCIMENTO"),
+                ("RESP", dp(20), None, "RESPONSÁVEL"),
+                ("DATA/HR", dp(20), None, "DATA DE EXPORTAÇÃO"),
+            ],
+            row_data=row_data,
+        )
+        self.data_tables.bind(on_row_press=self.on_row_press)
+        self.data_tables.bind(on_check_press=self.on_check_press)
+        self.data_tables = self.data_tables
+        self.ids.lista_validade.add_widget(self.data_tables)
                     
-        except Exception:
-            texto = "Verifique sua conexão!"
-            show_snackbar(texto)
+        #except Exception:
+            #texto = "Verifique sua conexão!"
+            #show_snackbar(texto)
     def on_row_press(self, instance_table, instance_row):
         '''Called when a table row is clicked.'''
-
         print(instance_table, instance_row)
+    def on_check_press(self, instance_table, current_row):
+        app = App.get_running_app()
+        self.setor = app.setor
+        self.key_data = get_node_key(current_row[1],current_row[2],current_row[3],current_row[4],current_row[5], current_row[6], self.setor)
+        self.selected_row = current_row
+        self.right_action_items = [["table-edit", lambda x: app.edit_selected_row(self.selected_row[1], self.selected_row[2], self.selected_row[3], self.selected_row[4], self.selected_row[5])]]
+        print(self.key_data)
+        print(instance_table, current_row)
 
 class ClickableTextFieldRound(MDRelativeLayout):
     text = StringProperty()
@@ -506,14 +524,24 @@ class InventApp(MDApp):
         self.tela_prices = (Builder.load_file('./prices/precificacao.kv'))
         self.tela_validade = (Builder.load_file('./validade/validade.kv'))
         self.tela_fazer_validade = (Builder.load_file('./validade/fazer_validade.kv'))
+        self.tela_editar_validade = (Builder.load_file('./validade/editar_validade.kv'))
         self.screen_manager.add_widget(self.tela_cadastro)
         self.screen_manager.add_widget(self.tela_prices)
         self.screen_manager.add_widget(self.tela_principal)
         self.screen_manager.add_widget(self.tela_recuperacao)
         self.screen_manager.add_widget(self.tela_validade)
         self.screen_manager.add_widget(self.tela_fazer_validade)
+        self.screen_manager.add_widget(self.tela_editar_validade)
         return self.screen_manager
     
+    def edit_selected_row(self, cod, desc, curv, qtd, val):
+        self.root.transition.direction = "left"
+        self.root.current = "editar_validade"
+        self.root.get_screen('editar_validade').ids.ean_ou_in.text = cod
+        self.root.get_screen('editar_validade').ids.val_desc.text = desc
+        self.root.get_screen('editar_validade').ids.val_curva.text = curv
+        self.root.get_screen('editar_validade').ids.val_qtd.text = qtd
+        self.root.get_screen('editar_validade').ids.data_vencimento.text = val
     
     def go_to_main_screen(self):
         self.root.transition.direction = "right"

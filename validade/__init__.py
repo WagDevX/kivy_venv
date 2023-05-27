@@ -89,3 +89,50 @@ def save_to_openoffice(data_table, index):
 
 
     return filename
+
+
+def get_node_key(cod, desc, curva, qtd, data_vencimento, responsavel, setor):
+    try:
+        firebase = pyrebase.initialize_app(firebaseConfig)
+        auth = firebase.auth()
+        db = firebase.database()
+        user = auth.sign_in_with_email_and_password("admin@admin.com", "123456")
+
+        # Recuperar o nó desejado com base nos dados fornecidos
+        query = db.child(setor).child("validade").order_by_child("COD").equal_to(cod).get(user['idToken'])
+        for item in query.each():
+            if item.val().get("Descricao") == desc and item.val().get("Curva") == curva and item.val().get("QTD") == qtd and item.val().get("Data_vencimento") == data_vencimento and item.val().get("Responsável") == responsavel:
+                node_key = item.key()
+                break
+        else:
+            print("Nó não encontrado")
+            return
+        return node_key
+        # Atualizar os dados do nó
+        '''novos_dados = {
+            "Descricao": desc,
+            "Curva": curva,
+            "QTD": qtd,
+            "Data_vencimento": data_vencimento,
+            "Responsável": responsavel
+        }
+        db.child(setor).child("validade").child(node_key).update(novos_dados, user['idToken'])
+        print("Dados atualizados com sucesso")'''
+
+    except Exception as e:
+        print("Ocorreu um erro ao pegar a key", e)
+
+def edit_selected_row(cod, desc, curva, qtd, data_vencimento, setor, node_key):
+    firebase = pyrebase.initialize_app(firebaseConfig)
+    auth = firebase.auth()
+    db = firebase.database()
+    user = auth.sign_in_with_email_and_password("admin@admin.com", "123456")
+    novos_dados = {
+        "COD": cod,
+        "Descricao": desc,
+        "Curva": curva,
+        "QTD": qtd,
+        "Data_vencimento": data_vencimento
+    }
+    db.child(setor).child("validade").child(node_key).update(novos_dados, user['idToken'])
+    show_snackbar("Dados atualizados com sucesso")

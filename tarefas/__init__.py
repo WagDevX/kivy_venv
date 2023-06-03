@@ -3,24 +3,11 @@ import datetime
 from kivymd.uix.snackbar import MDSnackbar,MDSnackbarCloseButton
 from kivymd.uix.label import MDLabel
 
-firebaseConfig = {
-    "apiKey": "AIzaSyCvJ9mXa6vY6EwPiXOY1o7KjMye22k0OJA",
-    "authDomain": "inventariocob.firebaseapp.com",
-    "projectId": "inventariocob",
-    "storageBucket": "inventariocob.appspot.com",
-    "messagingSenderId": "802697439429",
-    "appId": "1:802697439429:web:846552f1ba89ed60aa68ac",
-    "measurementId": "G-0SRYWQ5YJ3",
-    "databaseURL": "https://inventariocob-default-rtdb.firebaseio.com"
-  }
+from firebase import db, id_token
 
 def envia_tarefas_firebase(title, desc, prior, setor):
         agora = datetime.datetime.now()
         agora_sem_milissegundos = agora.strftime("%d/%m/%y %H:%M")
-        firebase = pyrebase.initialize_app(firebaseConfig)
-        auth = firebase.auth()
-        db = firebase.database()
-        user = auth.sign_in_with_email_and_password("admin@admin.com", "123456") 
         try:
             data = {"Titulo": title,
                     "Descricao": desc,
@@ -32,7 +19,7 @@ def envia_tarefas_firebase(title, desc, prior, setor):
                     "Data_fim": "None",
                     "Data_criacao": agora_sem_milissegundos
                     }
-            db.child(setor).child("tasks").push(data, user['idToken'])
+            db.child(setor).child("tasks").push(data, id_token)
         except Exception:
             texto = "Erro ao adicionar tarefa!"
             show_snackbar(texto)
@@ -44,10 +31,6 @@ def envia_tarefas_firebase(title, desc, prior, setor):
 def inicia_tarefas_firebase(key,title,desc, prio, resp, setor):
         agora = datetime.datetime.now()
         agora_sem_milissegundos = agora.strftime("%d/%m/%y %H:%M")
-        firebase = pyrebase.initialize_app(firebaseConfig)
-        auth = firebase.auth()
-        db = firebase.database()
-        user = auth.sign_in_with_email_and_password("admin@admin.com", "123456") 
         try:
             data = {"Titulo": title,
                     "Descricao": desc,
@@ -58,7 +41,7 @@ def inicia_tarefas_firebase(key,title,desc, prio, resp, setor):
                     "Data_in": agora_sem_milissegundos,
                     "Data_fim": "None",
                     }
-            db.child(setor).child("tasks").child(key).set(data, user['idToken'])
+            db.child(setor).child("tasks").child(key).set(data, id_token)
         except Exception:
             texto = "Erro ao iniciar tarefa!"
             show_snackbar(texto)
@@ -90,10 +73,6 @@ def show_snackbar(textosnack):
 def finaliza_tarefas_firebase(key,title,desc, prio, resp, data_in,setor):
         agora = datetime.datetime.now()
         agora_sem_milissegundos = agora.strftime("%d/%m/%y %H:%M")
-        firebase = pyrebase.initialize_app(firebaseConfig)
-        auth = firebase.auth()
-        db = firebase.database()
-        user = auth.sign_in_with_email_and_password("admin@admin.com", "123456") 
         try:
             data = {"Titulo": title,
                     "Descricao": desc,
@@ -104,7 +83,7 @@ def finaliza_tarefas_firebase(key,title,desc, prio, resp, data_in,setor):
                     "Data_fim": agora_sem_milissegundos,
                     "Data_in": data_in,
                     }
-            db.child(setor).child("tasks").child(key).set(data, user['idToken'])
+            db.child(setor).child("tasks").child(key).set(data, id_token)
         except Exception:
             texto = "Erro ao finalizar tarefa!"
             show_snackbar(texto)

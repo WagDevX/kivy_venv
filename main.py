@@ -54,18 +54,9 @@ from pyzbar.pyzbar import ZBarSymbol
 from pyzbar.pyzbar import decode
 from kivy.core.audio import SoundLoader
 import datetime
+import threading
 
-
-firebaseConfig = {
-    "apiKey": "AIzaSyCvJ9mXa6vY6EwPiXOY1o7KjMye22k0OJA",
-    "authDomain": "inventariocob.firebaseapp.com",
-    "projectId": "inventariocob",
-    "storageBucket": "inventariocob.appspot.com",
-    "messagingSenderId": "802697439429",
-    "appId": "1:802697439429:web:846552f1ba89ed60aa68ac",
-    "measurementId": "G-0SRYWQ5YJ3",
-    "databaseURL": "https://inventariocob-default-rtdb.firebaseio.com"
-  }
+from firebase import db, id_token
 class FValidade(Screen):
     def access_key_data(self):
         validade_screen = self.manager.get_screen("tela_validade")
@@ -73,7 +64,6 @@ class FValidade(Screen):
         print(key_data)
         return key_data
 class Validade(Screen):
-    
     right_action_items = ListProperty([])
     selected_row = []
     data_tables = dict()
@@ -81,73 +71,78 @@ class Validade(Screen):
     key_data = []
     num_col = 1
     setor = None
+    initialized = False
+    
     def on_enter(self):
-        app = App.get_running_app()
-        self.setor = app.setor
-        #try:
-        firebase = pyrebase.initialize_app(firebaseConfig)
-        auth = firebase.auth()
-        db = firebase.database()
-        user = auth.sign_in_with_email_and_password("admin@admin.com", "123456")
-        validades = db.child(self.setor).child("validade").get(user['idToken']).val()
+        if not self.initialized:
+            self.add_table()
+    def add_table(self, refresh=False):
+                app = App.get_running_app()
+                self.setor = app.setor
+                try:
+                    validades = db.child(self.setor).child("validade").get(id_token).val()
+                    row_data = []
+                    index = 1
+                    for key, value in validades.items():
+                        key = key
+                        cod = value.get("COD", "")
+                        desc = value.get("Descricao", "")
+                        curva = value.get("Curva", "")
+                        qtd = value.get("QTD", "")
+                        vencimento = value.get("Data_vencimento", "")
+                        resp = value.get("Responsável", "")
+                        data_add = value.get("Data_de_adição", "")
+                        
+                        row = (str(index), cod, desc, curva, qtd, vencimento, resp, data_add)
+                        row_data.append(row)
+                        index += 1
+                        self.num_col += 1
 
-        
-        row_data = []
-        index = 1
-        for key, value in validades.items():
-            key = key
-            cod = value.get("COD", "")
-            desc = value.get("Descricao", "")
-            curva = value.get("Curva", "")
-            qtd = value.get("QTD", "")
-            vencimento = value.get("Data_vencimento", "")
-            resp = value.get("Responsável", "")
-            data_add = value.get("Data_de_adição", "")
-            
-            row = (str(index), cod, desc, curva, qtd, vencimento, resp, data_add)
-            row_data.append(row)
-            index += 1
-            self.num_col += 1
+                    row_data.sort(key=lambda x: datetime.datetime.strptime(x[5], "%d/%m/%Y"))
+                    row_data = [(str(i), *row[1:]) for i, row in enumerate(row_data, 1)]
 
-        row_data.sort(key=lambda x: datetime.datetime.strptime(x[5], "%d/%m/%Y"))
-        row_data = [(str(i), *row[1:]) for i, row in enumerate(row_data, 1)]
-
-        self.data_tables = MDDataTable(
-            size_hint=(0.9, 0.9),
-            use_pagination=True,
-            check=True,
-            shadow_softness_size=2,
-            column_data=[
-                ("No.", dp(20), None, "Índice"),
-                ("COD", dp(20), None, "CÓDIGO"),
-                ("DESCRIÇÃO", dp(40)),
-                ("CURVA", dp(20), None, "CURVA DE VENDA"),
-                ("QTD", dp(20), None, "QUANTIDADE"),
-                ("VENC", dp(20), None, "DATA DE VENCIMENTO"),
-                ("RESP", dp(20), None, "RESPONSÁVEL"),
-                ("DATA/HR", dp(20), None, "DATA DE EXPORTAÇÃO"),
-            ],
-            row_data=row_data,
-        )
-        self.data_tables.bind(on_row_press=self.on_row_press)
-        self.data_tables.bind(on_check_press=self.on_check_press)
-        self.data_tables = self.data_tables
-        self.ids.lista_validade.add_widget(self.data_tables)
+                    self.data_tables = MDDataTable(
+                        background_color_header="#74DBFF",
+                        padding=(0,0,0,0),
+                        size_hint=(1, 1),
+                        use_pagination=True,
+                        rows_num=10,
+                        check=True,
+                        shadow_softness_size=2,
+                        elevation = 0,
+                        column_data=[
+                            ("No.", dp(20), None, "Índice"),
+                            ("COD", dp(20), None, "CÓDIGO"),
+                            ("DESCRIÇÃO", dp(40)),
+                            ("CURVA", dp(20), None, "CURVA DE VENDA"),
+                            ("QTD", dp(20), None, "QUANTIDADE"),
+                            ("VENC", dp(20), None, "DATA DE VENCIMENTO"),
+                            ("RESP", dp(20), None, "RESPONSÁVEL"),
+                            ("DATA/HR", dp(20), None, "DATA DE EXPORTAÇÃO"),
+                        ],
+                        row_data=row_data,
+                    )
+                    self.data_tables.bind(on_check_press=self.on_check_press)
+                    self.data_tables = self.data_tables
+                    self.ids.lista_validade.add_widget(self.data_tables)
+                    if refresh:
+                        show_snackbar("Atualizado com sucesso!")
+                except Exception:
+                    texto = "Verifique sua conexão!"
+                    show_snackbar(texto)
+                finally:
+                    self.initialized = True
                     
-        #except Exception:
-            #texto = "Verifique sua conexão!"
-            #show_snackbar(texto)
-    def on_row_press(self, instance_table, instance_row):
-        '''Called when a table row is clicked.'''
-        print(instance_table, instance_row)
+        
     def on_check_press(self, instance_table, current_row):
         app = App.get_running_app()
         self.setor = app.setor
-        self.key_data = get_node_key(current_row[1],current_row[2],current_row[3],current_row[4],current_row[5], current_row[6], self.setor)
         self.selected_row = current_row
         self.right_action_items = [["table-edit", lambda x: app.edit_selected_row(self.selected_row[1], self.selected_row[2], self.selected_row[3], self.selected_row[4], self.selected_row[5])]]
-        print(self.key_data)
-        print(instance_table, current_row)
+        t = threading.Thread(target=self.get_key_data, args=(current_row,))
+        t.start()
+    def get_key_data(self, current_row):
+        self.key_data = get_node_key(current_row[1],current_row[2],current_row[3],current_row[4],current_row[5], current_row[6], self.setor)
 
 class ClickableTextFieldRound(MDRelativeLayout):
     text = StringProperty()
@@ -382,16 +377,10 @@ class Principal(Screen):
             texto = "Erro de conexão!"
             self.show_snackbar(texto)
 
-    firebase = pyrebase.initialize_app(firebaseConfig)
-    auth = firebase.auth()
-    db = firebase.database()
-    user = auth.sign_in_with_email_and_password("admin@admin.com", "123456") 
-
     def on_enter(self, *args):
-        
         if not hasattr(self, 'stream_executed'):
             setor = self.ids.setor.text
-            self.my_stream = self.db.child(setor).child("tasks").stream(self.stream_handler, self.user['idToken'])
+            self.my_stream = db.child(setor).child("tasks").stream(self.stream_handler, id_token)
             self.stream_executed = True
     
     def close_stream(self):
@@ -428,53 +417,26 @@ class Tab(MDFloatLayout, MDTabsBase):
     pass
 
 class ScreenListItems(Screen):
-    '''def on_kv_post(self, base_widget):
-        # Carrega o arquivo JSON em um dicionário
-        with open('seu_arquivo.json',encoding='utf-8') as f:
-            data = json.load(f)
-
-        # Loop através de cada item do dicionário
-        for key, value in data.items():
-            self.ids.rv.data.append(
-                {
-                    "text": str(key),
-                    "secondary_text": str(value['descricao']),
-                    "callback": lambda x: x,
-                    "secondary_font_style": "Caption",
-                    "_txt_left_pad": "2dp",
-                }
-            )'''
-    
-    def lista_a_procura(self, text="", search=False):
+    def search_products(self, text="", search=False, products=None):
         self.ids.rv.data = []
 
-        with open('DADOS_PRODUTOS.json', encoding='utf-8') as f:
-            produtos = json.load(f)
+        if products is None:
+            with open('DADOS_PRODUTOS.json', encoding='utf-8') as f:
+                products = json.load(f)
 
-        keywords = text.upper().replace('.', '').split()
+        keywords = set(text.upper().replace('.', '').split())
 
-        for ean, produto in produtos.items():
-            if search:
-                descricao = produto['descricao'].upper().replace('.', '')
-                if all(keyword in descricao for keyword in keywords):
-                    self.ids.rv.data.append(
-                        {
-                            "source": 'wsol_icon.png',
-                            "text": ean,
-                            "secondary_text": produto['descricao'],
-                            "secondary_font_style": "Caption",
-                            "_txt_left_pad": "2dp",
-                        }
-                    )
-            else:
-                self.ids.rv.data.append(
-                    {
-                        "source": 'wsol_icon.png',
-                        "text": ean,
-                        "secondary_text": produto['descricao'],
-                        "callback": lambda x: x,
-                    }
-                )
+        self.ids.rv.data = [
+            {
+                "source": 'wsol_icon.png',
+                "text": ean,
+                "secondary_text": product['descricao'],
+                "secondary_font_style": "Caption",
+                "_txt_left_pad": "2dp",
+            }
+            for ean, product in products.items()
+            if (search and keywords.intersection(set(product['descricao'].upper().replace('.', '').split()))) or not search
+        ]
 
 class ListaItemsComImg(TwoLineListItem):
     pass
@@ -490,11 +452,6 @@ class InventApp(MDApp):
     add_abastecimento_firebase = add_abastecimento_firebase
     widgets = {}
     widgets_precos = {}
-    firebase = pyrebase.initialize_app(firebaseConfig)
-    auth = firebase.auth()
-    db = firebase.database()
-    user = auth.sign_in_with_email_and_password("admin@admin.com", "123456") 
-
     usuario_logado = None
     dialog = None
     dialog2 = None
@@ -775,18 +732,16 @@ class InventApp(MDApp):
                 qtd = 1
             else:
                 qtd = int(qtd)
-            user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
-
-            ean_data = self.db.child(self.setor).child("precos").child(ean).get(user['idToken']).val()
+            ean_data = db.child(self.setor).child("precos").child(ean).get(id_token).val()
 
             if ean_data:
                 ean_qtd = ean_data.get('Quantidade', 0)
                 nova_qtd = ean_qtd + qtd
                 data = {"Quantidade": nova_qtd}
-                self.db.child(self.setor).child("precos").child(ean).update(data, user['idToken'])
+                db.child(self.setor).child("precos").child(ean).update(data, id_token)
             else:
                 data = {"Quantidade": qtd, "User": self.usuario_logado}
-                self.db.child(self.setor).child("precos").child(ean).set(data, user['idToken'])
+                db.child(self.setor).child("precos").child(ean).set(data, id_token)
 
             if ean in self.widgets_precos:
                 grid_layout = self.widgets_precos[ean].children[0]
@@ -795,7 +750,7 @@ class InventApp(MDApp):
                 for item in items:
                     if isinstance(item, TwoLineAvatarIconListItem):
                         print('widget achado')
-                        ean_data = self.db.child(self.setor).child("precos").child(ean).get(user['idToken']).val()
+                        ean_data = db.child(self.setor).child("precos").child(ean).get(id_token).val()
                         nova_qtd = ean_data.get('Quantidade', 0)
                         item.text = f"QUANTIDADE: {nova_qtd}"
                         show_snackbar("Quantidade atualizada!")
@@ -836,8 +791,7 @@ class InventApp(MDApp):
         try:
             for item in list(self.root.get_screen('main').ids.md_list.children):
                 self.root.get_screen('main').ids.md_list.remove_widget(item)
-            user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
-            all_items = self.db.child(self.setor).child("precos").get(user['idToken'])
+            all_items = db.child(self.setor).child("precos").get(id_token)
             for ean, data in all_items.val().items():
                 qtd = data.get("Quantidade")
                 user_l = data.get("User")
@@ -876,32 +830,29 @@ class InventApp(MDApp):
 
     def delete_item(self, button):
         ean = button.ean
-        print(button.ean)
-        user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
-        self.db.child(self.setor).child("precos").child(ean).remove(user['idToken'])
+        db.child(self.setor).child("precos").child(ean).remove(id_token)
         parent_item = button.parent.parent.parent.parent
         parent_item.parent.remove_widget(parent_item)
         show_snackbar("Iten excluído!")
 
     def delete_item_2(self, eans):
         try:
-            user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
             updates = {}
             for ean in eans:
                 updates[ean] = None
                 file_path = os.path.join(os.getcwd(), "prices", ean  + '.png')
                 os.remove(file_path)
-            self.db.child(self.setor).child("precos").update(updates, user['idToken'])
+            db.child(self.setor).child("precos").update(updates, id_token)
             show_snackbar("Itens excluídos!")
         except Exception:
             pass
 
     def delete_item_abastecimento(self, button):
         ean = button.ean
-        user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
-        self.db.child(self.setor).child("abastecimento").child(ean).remove(user['idToken'])
+        db.child(self.setor).child("abastecimento").child(ean).remove(id_token)
         parent_item = button.parent.parent
         parent_item.parent.remove_widget(parent_item)
+        show_snackbar("Item excluído!")
 
     def delete_selected_item(self, instance):
         selection_list = self.root.get_screen('main').ids.md_list

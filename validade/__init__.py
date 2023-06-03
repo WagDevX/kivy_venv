@@ -8,27 +8,11 @@ from kivy.utils import platform
 if platform =='android':
     from jnius import autoclass
 
-
-
-
-firebaseConfig = {
-    "apiKey": "AIzaSyCvJ9mXa6vY6EwPiXOY1o7KjMye22k0OJA",
-    "authDomain": "inventariocob.firebaseapp.com",
-    "projectId": "inventariocob",
-    "storageBucket": "inventariocob.appspot.com",
-    "messagingSenderId": "802697439429",
-    "appId": "1:802697439429:web:846552f1ba89ed60aa68ac",
-    "measurementId": "G-0SRYWQ5YJ3",
-    "databaseURL": "https://inventariocob-default-rtdb.firebaseio.com"
-  }
+from firebase import db, id_token
 
 def envia_validade_firebase(cod, desc, curva, qtd, vencimento, resp, setor):
         agora = datetime.datetime.now()
         agora_sem_milissegundos = agora.strftime("%d/%m/%y %H:%M")
-        firebase = pyrebase.initialize_app(firebaseConfig)
-        auth = firebase.auth()
-        db = firebase.database()
-        user = auth.sign_in_with_email_and_password("admin@admin.com", "123456") 
         try:
             data = {"COD": cod,
                     "Descricao": desc,
@@ -38,7 +22,7 @@ def envia_validade_firebase(cod, desc, curva, qtd, vencimento, resp, setor):
                     "Responsável": resp,
                     "Data_de_adição": agora_sem_milissegundos
                     }
-            db.child(setor).child("validade").push(data, user['idToken'])
+            db.child(setor).child("validade").push(data, id_token)
         except Exception:
             texto = "Erro ao exportar validade!"
             show_snackbar(texto)
@@ -93,13 +77,8 @@ def save_to_openoffice(data_table, index):
 
 def get_node_key(cod, desc, curva, qtd, data_vencimento, responsavel, setor):
     try:
-        firebase = pyrebase.initialize_app(firebaseConfig)
-        auth = firebase.auth()
-        db = firebase.database()
-        user = auth.sign_in_with_email_and_password("admin@admin.com", "123456")
-
-        # Recuperar o nó desejado com base nos dados fornecidos
-        query = db.child(setor).child("validade").order_by_child("COD").equal_to(cod).get(user['idToken'])
+        # Recuperar  nó desejado com base nos dados fornecidos
+        query = db.child(setor).child("validade").order_by_child("COD").equal_to(cod).get(id_token)
         for item in query.each():
             if item.val().get("Descricao") == desc and item.val().get("Curva") == curva and item.val().get("QTD") == qtd and item.val().get("Data_vencimento") == data_vencimento and item.val().get("Responsável") == responsavel:
                 node_key = item.key()
@@ -123,10 +102,6 @@ def get_node_key(cod, desc, curva, qtd, data_vencimento, responsavel, setor):
         print("Ocorreu um erro ao pegar a key", e)
 
 def edit_selected_row(cod, desc, curva, qtd, data_vencimento, setor, node_key):
-    firebase = pyrebase.initialize_app(firebaseConfig)
-    auth = firebase.auth()
-    db = firebase.database()
-    user = auth.sign_in_with_email_and_password("admin@admin.com", "123456")
     novos_dados = {
         "COD": cod,
         "Descricao": desc,
@@ -134,5 +109,7 @@ def edit_selected_row(cod, desc, curva, qtd, data_vencimento, setor, node_key):
         "QTD": qtd,
         "Data_vencimento": data_vencimento
     }
-    db.child(setor).child("validade").child(node_key).update(novos_dados, user['idToken'])
+    db.child(setor).child("validade").child(node_key).update(novos_dados, id_token)
     show_snackbar("Dados atualizados com sucesso")
+def remove_selected_row_firebase(setor, key):
+    db.child(setor).child("validade").child(key).remove(id_token)

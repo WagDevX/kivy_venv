@@ -33,8 +33,7 @@ Principal:
                                 size_hint_y: None
                                 orientation: "vertical"
                                 height: self.minimum_height
-                                on_minimum_height: self.height = self.minimum_height
-                    
+                                on_minimum_height: self.height = self.minimum_height              
                         MDBoxLayout:
                             id: box
                             spacing: "56dp"
@@ -194,8 +193,7 @@ Principal:
                         font_name: 'Kumbh'
                         title: "Meus dados"
                         icon: "account-box"
-                        FloatLayout:
-                
+                        FloatLayout:                
                             CampoDados:
                                 font_size: "18sp"
                                 mode: "rectangle"
@@ -247,8 +245,7 @@ Principal:
                                 icon: "logout"
                                 line_color: 0, 0, 0, 0
                                 pos_hint: {"center_x": .5, "center_y": .12}
-                                on_press: 
-                                    app.show_alert_dialog_logout()
+                                on_press: app.show_alert_dialog_logout()
                     Tab:
                         title: "Configurações"
                         icon: "account-settings"
@@ -267,7 +264,7 @@ Principal:
             text_validade_unfocus: False
             pos_hint: {'center_x': 0.5, 'center_y': 0.9}
             size_hint: .8, .11
-            on_text: root.lista_a_procura(self.text, True)
+            on_text: root.search_products(self.text, True)
         RecycleView:
             id: rv
             viewclass: 'ListaItemsComImg'
@@ -320,7 +317,6 @@ Principal:
     size_hint: 1, None
     style: "outlined" 
     radius: [10,10,10,10]
-
 <MD4Card>
     line_color: 0.1, 0.9, 0.9, 0.8
     height: "250dp"

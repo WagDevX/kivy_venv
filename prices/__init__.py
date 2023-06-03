@@ -4,6 +4,7 @@ from tarefas import show_snackbar
 from kivymd.uix.list import TwoLineAvatarIconListItem,OneLineRightIconListItem,IconLeftWidget
 
 import barcode
+from firebase import db, id_token
 
 def is_valid_ean(ean):
     if len(ean) != 13:
@@ -29,8 +30,7 @@ def add_abastecimento_firebase(self):
     try:
         for item in list(self.root.get_screen('main').ids.lista_abastecimento.children):
             self.root.get_screen('main').ids.lista_abastecimento.remove_widget(item)
-        user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
-        all_items = self.db.child(self.setor).child("abastecimento").get(user['idToken'])
+        all_items = db.child(self.setor).child("abastecimento").get(id_token)
         for ean, data in all_items.val().items():
             qtd = data.get("Quantidade")
             desc = data.get("Descrição")
@@ -56,22 +56,20 @@ def abastecimento(self, ean, qtd, desc):
             qtd = 1
         else:
             qtd = int(qtd)
-        user = self.auth.sign_in_with_email_and_password("admin@admin.com", "123456")
-
         # Verifica se o EAN já existe no Firebase
-        ean_data = self.db.child("abastecimento").child(ean).get(user['idToken']).val()
+        ean_data = db.child("abastecimento").child(ean).get(id_token).val()
 
         if ean_data:
             # Atualiza a quantidade do EAN caso já exista
             ean_qtd = ean_data.get('Quantidade', 0)
             nova_qtd = ean_qtd + qtd
             data = {"Quantidade": nova_qtd}
-            self.db.child(self.setor).child("abastecimento").child(ean).update(data, user['idToken'])
+            db.child(self.setor).child("abastecimento").child(ean).update(data, id_token)
         else:
             # Cria um novo item caso o EAN não exista
             data = {"Quantidade": qtd,
                     "Descrição": desc}
-            self.db.child(self.setor).child("abastecimento").child(ean).set(data, user['idToken'])
+            db.child(self.setor).child("abastecimento").child(ean).set(data, id_token)
 
         # Atualiza o widget do item correspondente
         for item in self.root.get_screen('main').ids.lista_abastecimento.children:

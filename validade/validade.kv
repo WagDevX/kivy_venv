@@ -11,6 +11,6 @@ Validade:
             id: val_toolbar
             title: "Validade"
             left_action_items: [["arrow-collapse-left", lambda x: app.go_to_main_screen()]]
-            right_action_items: [["trash-can", lambda x: remove_selected_row_firebase(app.setor, root.selected_row) ],["refresh", lambda x: root.add_table(True)],["download", lambda x: (save_to_openoffice(root.data_tables, root.num_col), show_snackbar("Arquivo salvo em downloads"))]] + root.right_action_items
+            right_action_items: [["trash-can", lambda x: root.confirmation_dialog_to_remove_row()],["refresh", lambda x: root.add_table(True)],["download", lambda x: (save_to_openoffice(root.data_tables, root.num_col), show_snackbar("Arquivo salvo em downloads"))]] + root.right_action_items
         AnchorLayout:
             id: lista_validade

@@ -33,7 +33,7 @@ from time import sleep
 from kivy_garden.zbarcam import ZBarCam
 from tarefas import show_snackbar
 from prices import abastecimento, add_abastecimento_firebase, is_valid_ean
-from validade import adiciona_validade_da_busca, get_node_key
+from validade import adiciona_validade_da_busca, get_node_key,remove_selected_row_firebase
 from kivy.utils import platform
 import os
 from barcode.writer import ImageWriter
@@ -68,10 +68,28 @@ class Validade(Screen):
     selected_row = []
     data_tables = dict()
     row_data = []
-    key_data = []
+    selected_row_key_data = []
     num_col = 1
     setor = None
     initialized = False
+
+    def confirmation_dialog_to_remove_row(self):
+        confirmation_dialog = MDDialog(
+                title="REMOVER",
+                text=f"Tem certeza que deseja remover a linha {self.selected_row[0]}?",
+                buttons=[
+                    MDFlatButton(
+                        text="Sim", 
+                        on_release=lambda *args: (self.remove_row_from_table(), remove_selected_row_firebase(self.setor, self.selected_row_key_data)),
+                        on_press=lambda *args: confirmation_dialog.dismiss()
+                    ),
+                    MDFlatButton(
+                        text="Cancelar", 
+                        on_press=lambda *args: confirmation_dialog.dismiss() 
+                    ),
+                ],
+            )
+        confirmation_dialog.open()
     
     def on_enter(self):
         if not self.initialized:
@@ -114,8 +132,8 @@ class Validade(Screen):
                             ("No.", dp(20), None, "Índice"),
                             ("COD", dp(20), None, "CÓDIGO"),
                             ("DESCRIÇÃO", dp(40)),
-                            ("CURVA", dp(20), None, "CURVA DE VENDA"),
-                            ("QTD", dp(20), None, "QUANTIDADE"),
+                            ("CURVA", dp(15), None, "CURVA DE VENDA"),
+                            ("QTD", dp(10), None, "QUANTIDADE"),
                             ("VENC", dp(20), None, "DATA DE VENCIMENTO"),
                             ("RESP", dp(20), None, "RESPONSÁVEL"),
                             ("DATA/HR", dp(20), None, "DATA DE EXPORTAÇÃO"),
@@ -141,8 +159,14 @@ class Validade(Screen):
         self.right_action_items = [["table-edit", lambda x: app.edit_selected_row(self.selected_row[1], self.selected_row[2], self.selected_row[3], self.selected_row[4], self.selected_row[5])]]
         t = threading.Thread(target=self.get_key_data, args=(current_row,))
         t.start()
+    def remove_row_from_table(self):
+        row = self.selected_row[0]
+        self.data_tables.remove_row(self.data_tables.row_data[int(row) - 1])
+        self.data_tables.row_data = [(str(i+1), *row[1:]) for i, row in enumerate(self.data_tables.row_data)]
+        show_snackbar("Excluído!")
+
     def get_key_data(self, current_row):
-        self.key_data = get_node_key(current_row[1],current_row[2],current_row[3],current_row[4],current_row[5], current_row[6], self.setor)
+        self.selected_row_key_data = get_node_key(current_row[1],current_row[2],current_row[3],current_row[4],current_row[5], current_row[6], self.setor)
 
 class ClickableTextFieldRound(MDRelativeLayout):
     text = StringProperty()

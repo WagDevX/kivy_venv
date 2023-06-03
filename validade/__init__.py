@@ -111,5 +111,6 @@ def edit_selected_row(cod, desc, curva, qtd, data_vencimento, setor, node_key):
     }
     db.child(setor).child("validade").child(node_key).update(novos_dados, id_token)
     show_snackbar("Dados atualizados com sucesso")
+    
 def remove_selected_row_firebase(setor, key):
     db.child(setor).child("validade").child(key).remove(id_token)

@@ -33,13 +33,16 @@ def verifica_dados_firebase(self, user, password, logado_antes=False):
                 birth = user_data['birth']
                 pnum = user_data['pnum']
                 setor = user_data['setor']
+                loja = user_data['loja']
                 dados_login = {'nome_de_usuario': nome_de_usuario, 
                             'email': user, 
                             'senha': password,
                             'nome': name,
                             'nasc': birth,
                             'pnum': pnum,
-                            'setor': setor}
+                            'setor': setor,
+                            'loja': loja
+                            }
                 with open('dados_login.json', 'w') as f:
                     json.dump(dados_login, f)   
                 self.root.current = "main"
@@ -57,11 +60,12 @@ def atualiza_dados_app(self):
     self.nasc = dados_login['nasc']
     self.pnum = dados_login['pnum']
     self.setor = dados_login['setor']
+    self.loja = dados_login['loja']
     self.usuario_logado = self.user
     self.setor = self.setor
     self.root.get_screen('main').ids.username.text = f"{self.user}"
     self.root.get_screen('main').ids.mail.text = f"{self.mail}"
-    self.root.get_screen('main').ids.pnum.text = f"{self.pnum}"
+    self.root.get_screen('main').ids.store.text = f"{self.loja}"
     self.root.get_screen('main').ids.birth.text = f"{self.nasc}"
     self.root.get_screen('main').ids.name.text = f"{self.nam}"
     self.root.get_screen('main').ids.setor.text = f"{self.setor}"

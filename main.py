@@ -60,7 +60,7 @@ from firebase import db, id_token
 class FValidade(Screen):
     def access_key_data(self):
         validade_screen = self.manager.get_screen("tela_validade")
-        key_data = validade_screen.key_data
+        key_data = validade_screen.selected_row_key_data
         print(key_data)
         return key_data
 class Validade(Screen):
@@ -71,6 +71,7 @@ class Validade(Screen):
     selected_row_key_data = []
     num_col = 1
     setor = None
+    loja = None
     initialized = False
 
     def confirmation_dialog_to_remove_row(self):
@@ -80,7 +81,7 @@ class Validade(Screen):
                 buttons=[
                     MDFlatButton(
                         text="Sim", 
-                        on_release=lambda *args: (self.remove_row_from_table(), remove_selected_row_firebase(self.setor, self.selected_row_key_data)),
+                        on_release=lambda *args: (self.remove_row_from_table(), remove_selected_row_firebase(self.setor, self.selected_row_key_data, self.loja)),
                         on_press=lambda *args: confirmation_dialog.dismiss()
                     ),
                     MDFlatButton(
@@ -97,8 +98,9 @@ class Validade(Screen):
     def add_table(self, refresh=False):
                 app = App.get_running_app()
                 self.setor = app.setor
+                self.loja = app.loja
                 try:
-                    validades = db.child(self.setor).child("validade").get(id_token).val()
+                    validades = db.child(self.loja).child(self.setor).child("validade").get(id_token).val()
                     row_data = []
                     index = 1
                     for key, value in validades.items():
@@ -155,8 +157,9 @@ class Validade(Screen):
     def on_check_press(self, instance_table, current_row):
         app = App.get_running_app()
         self.setor = app.setor
+        self.loja = app.loja
         self.selected_row = current_row
-        self.right_action_items = [["table-edit", lambda x: app.edit_selected_row(self.selected_row[1], self.selected_row[2], self.selected_row[3], self.selected_row[4], self.selected_row[5])]]
+        self.right_action_items = [["table-edit", lambda x: app.edit_selected_row(self.selected_row[0],self.selected_row[1], self.selected_row[2], self.selected_row[3], self.selected_row[4], self.selected_row[5],self.selected_row[6],self.selected_row[7])]]
         t = threading.Thread(target=self.get_key_data, args=(current_row,))
         t.start()
     def remove_row_from_table(self):
@@ -165,8 +168,15 @@ class Validade(Screen):
         self.data_tables.row_data = [(str(i+1), *row[1:]) for i, row in enumerate(self.data_tables.row_data)]
         show_snackbar("Excluído!")
 
+    def update_row_on_table(self, index, code, description, curv, qtd, venc, resp, datetime):
+        row_index = int(index) - 1
+        self.data_tables.update_row(
+            self.data_tables.row_data[row_index],  # old row data
+            [index, code, description, curv, qtd, venc, resp, datetime],          # new row data
+        )
+
     def get_key_data(self, current_row):
-        self.selected_row_key_data = get_node_key(current_row[1],current_row[2],current_row[3],current_row[4],current_row[5], current_row[6], self.setor)
+        self.selected_row_key_data = get_node_key(current_row[1],current_row[2],current_row[3],current_row[4],current_row[5], current_row[6], self.setor, self.loja)
 
 class ClickableTextFieldRound(MDRelativeLayout):
     text = StringProperty()
@@ -230,7 +240,7 @@ class Principal(Screen):
                     ),
                     MDFlatButton(
                         text="Sim", 
-                        on_press=lambda *args: finaliza_tarefas_firebase(widget.id, title, desc, prio, self.ids.username.text, data_in, self.ids.setor.text), 
+                        on_press=lambda *args: finaliza_tarefas_firebase(widget.id, title, desc, prio, self.ids.username.text, data_in, self.ids.setor, self.ids.store), 
                         on_release=lambda *args: confirmation_dialog.dismiss()
                     ),
                 ],
@@ -251,7 +261,7 @@ class Principal(Screen):
                     ),
                     MDFlatButton(
                         text="Sim", 
-                        on_press=lambda *args: inicia_tarefas_firebase(widget.id, title, desc, prio, self.ids.username.text, self.ids.setor.text), 
+                        on_press=lambda *args: inicia_tarefas_firebase(widget.id, title, desc, prio, self.ids.username.text, self.ids.setor.text, self.ids.store.text), 
                         on_release=lambda *args: confirmation_dialog.dismiss()
                     ),
                 ],
@@ -404,7 +414,8 @@ class Principal(Screen):
     def on_enter(self, *args):
         if not hasattr(self, 'stream_executed'):
             setor = self.ids.setor.text
-            self.my_stream = db.child(setor).child("tasks").stream(self.stream_handler, id_token)
+            loja = self.ids.store.text
+            self.my_stream = db.child(loja).child(setor).child("tasks").stream(self.stream_handler, id_token)
             self.stream_executed = True
     
     def close_stream(self):
@@ -442,25 +453,33 @@ class Tab(MDFloatLayout, MDTabsBase):
 
 class ScreenListItems(Screen):
     def search_products(self, text="", search=False, products=None):
-        self.ids.rv.data = []
 
-        if products is None:
-            with open('DADOS_PRODUTOS.json', encoding='utf-8') as f:
-                products = json.load(f)
+        def search_thread():
+            self.ids.rv.data = []
+            products = None
+            if products is None:
+                with open('DADOS_PRODUTOS.json', encoding='utf-8') as f:
+                    products = json.load(f)
 
-        keywords = set(text.upper().replace('.', '').split())
+            keywords = set(text.upper().split())
+            results = [
+                {
+                    "source": 'wsol_icon.png',
+                    "text": ean,
+                    "secondary_text": product['descricao'],
+                    "secondary_font_style": "Caption",
+                    "_txt_left_pad": "2dp",
+                }
+                for ean, product in products.items()
+                if (search and all(keyword in product['descricao'].upper() for keyword in keywords)) or not search
+            ]
+            # Atualize a exibição dos resultados na interface do usuário
+            self.ids.rv.data = results
 
-        self.ids.rv.data = [
-            {
-                "source": 'wsol_icon.png',
-                "text": ean,
-                "secondary_text": product['descricao'],
-                "secondary_font_style": "Caption",
-                "_txt_left_pad": "2dp",
-            }
-            for ean, product in products.items()
-            if (search and keywords.intersection(set(product['descricao'].upper().replace('.', '').split()))) or not search
-        ]
+        # Crie e inicie a thread de pesquisa
+        search_thread = threading.Thread(target=search_thread)
+        search_thread.start()
+
 
 class ListaItemsComImg(TwoLineListItem):
     pass
@@ -472,6 +491,7 @@ class CustomButton(IconLeftWidget):
 
 class InventApp(MDApp):
     setor = None
+    loja = None
     overlay_color = get_color_from_hex("#6042e4")
     add_abastecimento_firebase = add_abastecimento_firebase
     widgets = {}
@@ -516,9 +536,12 @@ class InventApp(MDApp):
         self.screen_manager.add_widget(self.tela_editar_validade)
         return self.screen_manager
     
-    def edit_selected_row(self, cod, desc, curv, qtd, val):
+    def edit_selected_row(self,index, cod, desc, curv, qtd, val, resp, datetime):
         self.root.transition.direction = "left"
         self.root.current = "editar_validade"
+        self.root.get_screen('editar_validade').ids.index.text = index
+        self.root.get_screen('editar_validade').ids.responsible.text = resp
+        self.root.get_screen('editar_validade').ids.date_time.text = datetime
         self.root.get_screen('editar_validade').ids.ean_ou_in.text = cod
         self.root.get_screen('editar_validade').ids.val_desc.text = desc
         self.root.get_screen('editar_validade').ids.val_curva.text = curv
@@ -553,7 +576,7 @@ class InventApp(MDApp):
             return
 
         # Caso todos os campos estejam preenchidos corretamente, envia a tarefa para o Firebase
-        envia_tarefas_firebase(title, description, priority, self.setor)
+        envia_tarefas_firebase(title, description, priority, self.setor, self)
 
     def verifica_campos_cadastro(self):
         # obtém, os valores dos campos de entrada
@@ -562,6 +585,7 @@ class InventApp(MDApp):
         celular = self.root.get_screen('cadastro').ids.pnum.text
         email = self.root.get_screen('cadastro').ids.mail.text
         usuario = self.root.get_screen('cadastro').ids.user.text
+        loja = self.root.get_screen('cadastro').ids.store.text
         password_widget = self.root.get_screen('cadastro').ids.password
         senha = password_widget.ids.text_field.text
         confirm_password_widget = self.root.get_screen('cadastro').ids.password_confirm
@@ -571,7 +595,7 @@ class InventApp(MDApp):
         self.root.get_screen('cadastro').ids.botao_cadastrar.text = 'Cadastrando'
 
         # verificar se todos os campos estão preenchidos
-        if nome == '' or nascimento == '' or celular == '' or email == '' or usuario == '' or senha == '' or confirmar_senha == '' or setor == '':
+        if nome == '' or nascimento == '' or celular == '' or email == '' or usuario == '' or senha == '' or confirmar_senha == '' or setor == '' or loja == '':
             self.show_error_dialog('Todos os campos são obrigatórios!')
             self.root.get_screen('cadastro').ids.botao_cadastrar.disabled = False
             self.root.get_screen('cadastro').ids.botao_cadastrar.text = 'Cadastrar'
@@ -585,7 +609,7 @@ class InventApp(MDApp):
             return
         
         def execute_later(dt):
-            if self.envia_dados_firebase(nome, email, celular, senha, usuario, nascimento, setor):
+            if self.envia_dados_firebase(nome, email, celular, senha, usuario, nascimento, setor, loja):
                 self.show_snackbar('Cadastrado com sucesso!')
             self.root.get_screen('cadastro').ids.botao_cadastrar.disabled = False
             self.root.get_screen('cadastro').ids.botao_cadastrar.text = 'Cadastrar'
@@ -630,9 +654,11 @@ class InventApp(MDApp):
                         email = dados_login['email']
                         senha = dados_login['senha']
                         user = dados_login['nome_de_usuario']
+                        loja = dados_login['loja']
                         if email.strip() and senha.strip() and user.strip():
                             self.login_checked = True
                             self.usuario_logado = user
+                            self.loja = loja
                             self.verifica_dados_firebase(email, senha, logado=True)
             except Exception:
                 pass
@@ -731,8 +757,8 @@ class InventApp(MDApp):
 
         Clock.schedule_once(execute_later, 1)
         
-    def envia_dados_firebase(self, nome, mail, pnum, passw, users, birth, setor):
-        if envia_dados_firebase(self, nome, mail, pnum, passw, users, birth, setor):
+    def envia_dados_firebase(self, nome, mail, pnum, passw, users, birth, setor, loja):
+        if envia_dados_firebase(self, nome, mail, pnum, passw, users, birth, setor, loja):
             return True
 
     def on_save(self, instance, value, date_range):
@@ -756,16 +782,16 @@ class InventApp(MDApp):
                 qtd = 1
             else:
                 qtd = int(qtd)
-            ean_data = db.child(self.setor).child("precos").child(ean).get(id_token).val()
+            ean_data = db.child(self.loja).child(self.setor).child("precos").child(ean).get(id_token).val()
 
             if ean_data:
                 ean_qtd = ean_data.get('Quantidade', 0)
                 nova_qtd = ean_qtd + qtd
                 data = {"Quantidade": nova_qtd}
-                db.child(self.setor).child("precos").child(ean).update(data, id_token)
+                db.child(self.loja).child(self.setor).child("precos").child(ean).update(data, id_token)
             else:
                 data = {"Quantidade": qtd, "User": self.usuario_logado}
-                db.child(self.setor).child("precos").child(ean).set(data, id_token)
+                db.child(self.loja).child(self.setor).child("precos").child(ean).set(data, id_token)
 
             if ean in self.widgets_precos:
                 grid_layout = self.widgets_precos[ean].children[0]
@@ -774,7 +800,7 @@ class InventApp(MDApp):
                 for item in items:
                     if isinstance(item, TwoLineAvatarIconListItem):
                         print('widget achado')
-                        ean_data = db.child(self.setor).child("precos").child(ean).get(id_token).val()
+                        ean_data = db.child(self.loja).child(self.setor).child("precos").child(ean).get(id_token).val()
                         nova_qtd = ean_data.get('Quantidade', 0)
                         item.text = f"QUANTIDADE: {nova_qtd}"
                         show_snackbar("Quantidade atualizada!")
@@ -815,7 +841,7 @@ class InventApp(MDApp):
         try:
             for item in list(self.root.get_screen('main').ids.md_list.children):
                 self.root.get_screen('main').ids.md_list.remove_widget(item)
-            all_items = db.child(self.setor).child("precos").get(id_token)
+            all_items = db.child(self.loja).child(self.setor).child("precos").get(id_token)
             for ean, data in all_items.val().items():
                 qtd = data.get("Quantidade")
                 user_l = data.get("User")
@@ -854,7 +880,7 @@ class InventApp(MDApp):
 
     def delete_item(self, button):
         ean = button.ean
-        db.child(self.setor).child("precos").child(ean).remove(id_token)
+        db.child(self.loja).child(self.setor).child("precos").child(ean).remove(id_token)
         parent_item = button.parent.parent.parent.parent
         parent_item.parent.remove_widget(parent_item)
         show_snackbar("Iten excluído!")
@@ -866,14 +892,14 @@ class InventApp(MDApp):
                 updates[ean] = None
                 file_path = os.path.join(os.getcwd(), "prices", ean  + '.png')
                 os.remove(file_path)
-            db.child(self.setor).child("precos").update(updates, id_token)
+            db.child(self.loja).child(self.setor).child("precos").update(updates, id_token)
             show_snackbar("Itens excluídos!")
         except Exception:
             pass
 
     def delete_item_abastecimento(self, button):
         ean = button.ean
-        db.child(self.setor).child("abastecimento").child(ean).remove(id_token)
+        db.child(self.loja).child(self.setor).child("abastecimento").child(ean).remove(id_token)
         parent_item = button.parent.parent
         parent_item.parent.remove_widget(parent_item)
         show_snackbar("Item excluído!")

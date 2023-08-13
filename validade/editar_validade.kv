@@ -12,6 +12,18 @@ FValidade:
             on_press:
                 root.manager.transition.direction = "right"
                 root.manager.current = "tela_validade"
+        MDLabel:
+            id: index
+            text: "text"
+            opacity: 0.0
+        MDLabel:
+            id: responsible
+            text: "text"
+            opacity: 0.0
+        MDLabel:
+            id: date_time
+            text: "text"
+            opacity: 0.0
         CampoDados:
             id: ean_ou_in
             hint_text: "COD EAN ou IN"
@@ -60,6 +72,7 @@ FValidade:
             pos_hint: {"center_x": .5, "center_y": .15}
             on_press:
                 edit_selected_row(ean_ou_in.text, val_desc.text, val_curva.text, val_qtd.text, data_vencimento.text, app.setor, root.access_key_data())
+                root.manager.get_screen("tela_validade").update_row_on_table(index.text,ean_ou_in.text, val_desc.text, val_curva.text, val_qtd.text, data_vencimento.text, responsible.text, date_time.text)
                 ean_ou_in.text = ""
                 val_desc.text = ""
                 val_curva.text = ""

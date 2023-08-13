@@ -10,7 +10,7 @@ if platform =='android':
 
 from firebase import db, id_token
 
-def envia_validade_firebase(cod, desc, curva, qtd, vencimento, resp, setor):
+def envia_validade_firebase(cod, desc, curva, qtd, vencimento, resp, setor, loja):
         agora = datetime.datetime.now()
         agora_sem_milissegundos = agora.strftime("%d/%m/%y %H:%M")
         try:
@@ -22,7 +22,7 @@ def envia_validade_firebase(cod, desc, curva, qtd, vencimento, resp, setor):
                     "Responsável": resp,
                     "Data_de_adição": agora_sem_milissegundos
                     }
-            db.child(setor).child("validade").push(data, id_token)
+            db.child(loja).child(setor).child("validade").push(data, id_token)
         except Exception:
             texto = "Erro ao exportar validade!"
             show_snackbar(texto)
@@ -30,6 +30,7 @@ def envia_validade_firebase(cod, desc, curva, qtd, vencimento, resp, setor):
             texto = "Exportado com sucesso!"
             show_snackbar(texto)
             return True
+        
 def adiciona_validade_da_busca(self, cod, desc):
      self.root.get_screen('fazer_validade').ids.ean_ou_in.text = cod
      self.root.get_screen('fazer_validade').ids.val_desc.text = desc
@@ -75,10 +76,10 @@ def save_to_openoffice(data_table, index):
     return filename
 
 
-def get_node_key(cod, desc, curva, qtd, data_vencimento, responsavel, setor):
+def get_node_key(cod, desc, curva, qtd, data_vencimento, responsavel, setor, loja):
     try:
         # Recuperar  nó desejado com base nos dados fornecidos
-        query = db.child(setor).child("validade").order_by_child("COD").equal_to(cod).get(id_token)
+        query = db.child(loja).child(setor).child("validade").order_by_child("COD").equal_to(cod).get(id_token)
         for item in query.each():
             if item.val().get("Descricao") == desc and item.val().get("Curva") == curva and item.val().get("QTD") == qtd and item.val().get("Data_vencimento") == data_vencimento and item.val().get("Responsável") == responsavel:
                 node_key = item.key()
@@ -101,7 +102,7 @@ def get_node_key(cod, desc, curva, qtd, data_vencimento, responsavel, setor):
     except Exception as e:
         print("Ocorreu um erro ao pegar a key", e)
 
-def edit_selected_row(cod, desc, curva, qtd, data_vencimento, setor, node_key):
+def edit_selected_row(cod, desc, curva, qtd, data_vencimento, setor, node_key, loja):
     novos_dados = {
         "COD": cod,
         "Descricao": desc,
@@ -109,8 +110,8 @@ def edit_selected_row(cod, desc, curva, qtd, data_vencimento, setor, node_key):
         "QTD": qtd,
         "Data_vencimento": data_vencimento
     }
-    db.child(setor).child("validade").child(node_key).update(novos_dados, id_token)
+    db.child(loja).child(setor).child("validade").child(node_key).update(novos_dados, id_token)
     show_snackbar("Dados atualizados com sucesso")
     
-def remove_selected_row_firebase(setor, key):
-    db.child(setor).child("validade").child(key).remove(id_token)
+def remove_selected_row_firebase(setor, key, loja):
+    db.child(loja).child(setor).child("validade").child(key).remove(id_token)

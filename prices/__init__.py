@@ -30,7 +30,7 @@ def add_abastecimento_firebase(self):
     try:
         for item in list(self.root.get_screen('main').ids.lista_abastecimento.children):
             self.root.get_screen('main').ids.lista_abastecimento.remove_widget(item)
-        all_items = db.child(self.setor).child("abastecimento").get(id_token)
+        all_items = db.child(self.loja).child(self.setor).child("abastecimento").get(id_token)
         for ean, data in all_items.val().items():
             qtd = data.get("Quantidade")
             desc = data.get("Descrição")
@@ -57,19 +57,19 @@ def abastecimento(self, ean, qtd, desc):
         else:
             qtd = int(qtd)
         # Verifica se o EAN já existe no Firebase
-        ean_data = db.child("abastecimento").child(ean).get(id_token).val()
+        ean_data = db.child(self.loja).child(self.setor).child("abastecimento").child(ean).get(id_token).val()
 
         if ean_data:
             # Atualiza a quantidade do EAN caso já exista
             ean_qtd = ean_data.get('Quantidade', 0)
             nova_qtd = ean_qtd + qtd
             data = {"Quantidade": nova_qtd}
-            db.child(self.setor).child("abastecimento").child(ean).update(data, id_token)
+            db.child(self.loja).child(self.setor).child("abastecimento").child(ean).update(data, id_token)
         else:
             # Cria um novo item caso o EAN não exista
             data = {"Quantidade": qtd,
                     "Descrição": desc}
-            db.child(self.setor).child("abastecimento").child(ean).set(data, id_token)
+            db.child(self.loja).child(self.setor).child("abastecimento").child(ean).set(data, id_token)
 
         # Atualiza o widget do item correspondente
         for item in self.root.get_screen('main').ids.lista_abastecimento.children:

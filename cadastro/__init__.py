@@ -11,7 +11,7 @@ firebaseConfig = {
     "databaseURL": "https://inventariocob-default-rtdb.firebaseio.com"
   }
 
-def envia_dados_firebase(self, nome, mail, pnum, passw, users, birth, setor):
+def envia_dados_firebase(self, nome, mail, pnum, passw, users, birth, setor, loja):
         firebase = pyrebase.initialize_app(firebaseConfig)
         auth = firebase.auth()
         db = firebase.database()
@@ -28,7 +28,8 @@ def envia_dados_firebase(self, nome, mail, pnum, passw, users, birth, setor):
                     "email": mail,
                     "pnum": pnum,
                     "user": users,
-                    "setor": setor
+                    "setor": setor,
+                    "loja" : loja
                     }
             db.child("users").child(users).set(data, user['idToken'])
             self.root.transition.direction = "right"

@@ -5,7 +5,7 @@ from kivymd.uix.label import MDLabel
 
 from firebase import db, id_token
 
-def envia_tarefas_firebase(title, desc, prior, setor):
+def envia_tarefas_firebase(title, desc, prior, setor, loja):
         agora = datetime.datetime.now()
         agora_sem_milissegundos = agora.strftime("%d/%m/%y %H:%M")
         try:
@@ -19,7 +19,7 @@ def envia_tarefas_firebase(title, desc, prior, setor):
                     "Data_fim": "None",
                     "Data_criacao": agora_sem_milissegundos
                     }
-            db.child(setor).child("tasks").push(data, id_token)
+            db.child(loja).child(setor).child("tasks").push(data, id_token)
         except Exception:
             texto = "Erro ao adicionar tarefa!"
             show_snackbar(texto)
@@ -28,7 +28,7 @@ def envia_tarefas_firebase(title, desc, prior, setor):
             show_snackbar(texto)
             return True
         
-def inicia_tarefas_firebase(key,title,desc, prio, resp, setor):
+def inicia_tarefas_firebase(key,title,desc, prio, resp, setor, loja):
         agora = datetime.datetime.now()
         agora_sem_milissegundos = agora.strftime("%d/%m/%y %H:%M")
         try:
@@ -41,7 +41,7 @@ def inicia_tarefas_firebase(key,title,desc, prio, resp, setor):
                     "Data_in": agora_sem_milissegundos,
                     "Data_fim": "None",
                     }
-            db.child(setor).child("tasks").child(key).set(data, id_token)
+            db.child(loja).child(setor).child("tasks").child(key).set(data, id_token)
         except Exception:
             texto = "Erro ao iniciar tarefa!"
             show_snackbar(texto)
@@ -70,7 +70,7 @@ def show_snackbar(textosnack):
     )
     snackbar.open()
 
-def finaliza_tarefas_firebase(key,title,desc, prio, resp, data_in,setor):
+def finaliza_tarefas_firebase(key,title,desc, prio, resp, data_in,setor, loja):
         agora = datetime.datetime.now()
         agora_sem_milissegundos = agora.strftime("%d/%m/%y %H:%M")
         try:
@@ -83,7 +83,7 @@ def finaliza_tarefas_firebase(key,title,desc, prio, resp, data_in,setor):
                     "Data_fim": agora_sem_milissegundos,
                     "Data_in": data_in,
                     }
-            db.child(setor).child("tasks").child(key).set(data, id_token)
+            db.child(loja).child(setor).child("tasks").child(key).set(data, id_token)
         except Exception:
             texto = "Erro ao finalizar tarefa!"
             show_snackbar(texto)

@@ -58,7 +58,7 @@ FValidade:
             line_color: 0, 0, 0, 0
             pos_hint: {"center_x": .5, "center_y": .15}
             on_press:
-                envia_validade_firebase(ean_ou_in.text, val_desc.text.upper(), val_curva.text.upper(), val_qtd.text, data_vencimento.text, app.usuario_logado, app.setor)
+                envia_validade_firebase(ean_ou_in.text, val_desc.text.upper(), val_curva.text.upper(), val_qtd.text, data_vencimento.text, app.usuario_logado, app.setor, app.loja)
                 ean_ou_in.text = ""
                 val_desc.text = ""
                 val_curva.text = ""
